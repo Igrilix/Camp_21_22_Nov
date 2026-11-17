@@ -283,23 +283,24 @@ void s1Update() {                         // call from loop(), non-blocking
 }
 
 const char PAGE[] PROGMEM = R"HTML(<!DOCTYPE html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ESP32 CAR</title><style>
 *{box-sizing:border-box}
-body{margin:0;background:#111;color:#eee;font-family:sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;height:100vh}
-#pad{display:flex;align-items:center;justify-content:space-between;height:100vh;padding:0 4vw}
-#joy{width:min(66vh,38vw);height:min(66vh,38vw);border-radius:50%;background:#222;border:3px solid #2a6;position:relative;touch-action:none;flex:none}
+html,body{margin:0;width:100%;height:100%;height:100dvh;background:#111;color:#eee;font-family:sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+#pad{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;justify-items:center;width:100%;height:100%;height:100dvh;gap:clamp(6px,2vw,24px);padding:max(8px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right),3vw) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left),3vw)}
+#joy{width:min(62vh,28vw);height:min(62vh,28vw);width:min(62dvh,28vw);height:min(62dvh,28vw);border-radius:50%;background:#222;border:3px solid #2a6;position:relative;touch-action:none}
 #knob{position:absolute;width:38%;height:38%;border-radius:50%;background:#2a6;pointer-events:none;left:31%;top:31%}
-#mid{flex:1;text-align:center;padding:0 2vw;font-size:14px;line-height:1.5}
-#face{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:min(66vh,38vw);height:min(66vh,38vw);flex:none;gap:2%}
-.fb{border-radius:50%;border:3px solid;background:#222;font-size:min(9vh,6vw);display:flex;align-items:center;justify-content:center;touch-action:none}
+#mid{width:100%;max-width:420px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(2px,0.8dvh,8px);text-align:center;font-size:clamp(11px,min(2.3dvh,1.6vw),15px);line-height:1.35}
+#irc{width:100%;max-width:220px;height:clamp(22px,5.5dvh,36px);background:#000;border-radius:6px;display:block}
+#face{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:min(62vh,28vw);height:min(62vh,28vw);width:min(62dvh,28vw);height:min(62dvh,28vw);gap:2%}
+.fb{border-radius:50%;border:3px solid;background:#222;font-size:min(7.5vh,4.5vw);font-size:min(7.5dvh,4.5vw);display:flex;align-items:center;justify-content:center;touch-action:none}
 #bT{grid-area:1/2;color:#4c8;border-color:#4c8}#bS{grid-area:2/1;color:#e8a;border-color:#e8a}
 #bO{grid-area:2/3;color:#e55;border-color:#e55}#bX{grid-area:3/2;color:#58f;border-color:#58f}
-button.m{font-size:14px;padding:8px 12px;border:0;border-radius:8px;background:#444;color:#fff;margin:2px}
-input[type=range]{width:90%}
+button.m{font-size:clamp(11px,min(2.3dvh,1.5vw),15px);padding:clamp(5px,1.2dvh,9px) clamp(8px,1.4vw,14px);border:0;border-radius:8px;background:#444;color:#fff;margin:2px}
+input[type=range]{width:90%;max-width:260px}
 #rot{display:none;position:fixed;inset:0;background:#111;z-index:9;align-items:center;justify-content:center;font-size:22px;text-align:center}
 @media (orientation:portrait){#rot{display:flex}}
-#menu{display:none;position:fixed;inset:0;background:#111;z-index:20;padding:10px;overflow:auto;touch-action:pan-y;text-align:center}
+#menu{display:none;position:fixed;inset:0;background:#111;z-index:20;padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow:auto;touch-action:pan-y;text-align:center}
 .r{max-width:360px;margin:6px auto;text-align:left}
 </style></head><body>
 <div id=rot>&#8635; หมุนจอเป็นแนวนอน<br>Rotate to landscape<br><small>(แตะเพื่อปิด)</small></div>
@@ -307,10 +308,10 @@ input[type=range]{width:90%}
  <div id=joy><div id=knob></div></div>
  <div id=mid>
   <div id=st2>...</div>
-  <canvas id=irc width=240 height=36 style="background:#000;border-radius:6px"></canvas>
-  <div id=msg style="color:#fc3;min-height:20px"></div>
-  Speed <span id=sv>200</span><br><input id=sp type=range min=50 max=255 value=200 oninput="sv.innerText=this.value">
-  <div><button class=m id=fs>Fullscreen</button><button class=m id=gear>&#9881; Menu</button><button class=m id=stop style="background:#c33">STOP</button></div>
+  <canvas id=irc width=240 height=36></canvas>
+  <div id=msg style="color:#fc3;min-height:1.3em"></div>
+  <div style="width:100%">Speed <span id=sv>200</span><br><input id=sp type=range min=50 max=255 value=200 oninput="sv.innerText=this.value"></div>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px"><button class=m id=fs>Fullscreen</button><button class=m id=gear>&#9881; Menu</button><button class=m id=stop style="background:#c33">STOP</button></div>
  </div>
  <div id=face>
   <div class=fb id=bT data-b=T>&#9651;</div>
