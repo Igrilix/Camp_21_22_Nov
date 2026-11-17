@@ -86,19 +86,23 @@ WebServer server(80);
 unsigned long lastCmd = 0;
 const unsigned long FAILSAFE_MS = 800;  // stop if no command (phone lost)
 
-void driveMotor(int in1, int in2, int ch, int speed, bool inv) {
+void driveMotor(int in1, int in2, int pwmPin, int ch, int speed, bool inv) {
   if (inv) speed = -speed;
   speed = constrain(speed, -255, 255);
   digitalWrite(in1, speed > 0);
   digitalWrite(in2, speed < 0);
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcWrite(pwmPin, abs(speed));
+#else
   ledcWrite(ch, abs(speed));
+#endif
 }
 
 // left/right: -255..255
 void drive(int left, int right) {
   if (SWAP_LR) { int t = left; left = right; right = t; }
-  driveMotor(AIN1, AIN2, CH_A, left,  INVERT_A);
-  driveMotor(BIN1, BIN2, CH_B, right, INVERT_B);
+  driveMotor(AIN1, AIN2, PWMA, CH_A, left,  INVERT_A);
+  driveMotor(BIN1, BIN2, PWMB, CH_B, right, INVERT_B);
 }
 
 // logical angle -> physical (only the homed servo is shifted)
@@ -252,28 +256,27 @@ void irSample() {
   if (millis() - irWinT0 >= 1000) { irFlipsLast = irFlipCnt; irFlipCnt = 0; irWinT0 = millis(); }
 }
 
-// ---------- Triangle / X buttons: S1 up (toggle with T) / down (X until IR toggles or home switch) ----------
-bool s1IrStart = false;   // IR level when going DOWN started; we stop when it CHANGES
+// ---------- Triangle / X buttons: S1 up (toggle with T) / down (toggle with X, stops on IR detect or home switch) ----------
 int  s1IrCnt = 0;
 unsigned long s1IrT = 0;
-const unsigned long IR_HOLD_MS = 150;   // new IR level must also hold this long
-const int IR_CONFIRM = 8;    // consecutive reads with the new IR level before stopping
+const unsigned long IR_HOLD_MS = 150;   // IR detection must hold this long (debounce)
+const int IR_CONFIRM = 8;               // consecutive reads of IR detecting object before stopping
 void s1Start(int mode) {
   s1Mode = mode; s1T0 = millis();
   logEv("S1 start %s (limit=%d ir=%d)", mode == 1 ? "UP" : "DOWN", limitPressed(), irHit());
-  s1IrStart = irHit(); s1IrCnt = 0;
+  s1IrCnt = 0;
   homeRun(mode == 1 ? -1 : +1, MOVE_SPEED_US);   // UP = away from switch, DOWN = toward it
 }
 void s1Update() {                         // call from loop(), non-blocking
   if (!s1Mode) return;
   unsigned long el = millis() - s1T0;
-  if (s1Mode == 2) {                      // Going DOWN: stop on limit switch OR IR change
+  if (s1Mode == 2) {                      // Going DOWN: prioritize stopping on limit switch OR IR detecting object
     if (limitStable()) {
       s1Why = "home switch pressed"; logEv("S1 stop: %s after %lums", s1Why, el); homeStop(); s1Mode = 0; atTop = false; homed = true; servoAngle[HOME_SERVO] = 0; hitBeep(); return;
     }
-    if (el > 400) {                       // IR must TOGGLE vs. its level at start (debounced)
-      if (irHit() != s1IrStart) { if (!s1IrCnt) s1IrT = millis(); s1IrCnt++; } else s1IrCnt = 0;
-      if (s1IrCnt >= IR_CONFIRM && millis() - s1IrT >= IR_HOLD_MS) { s1Why = "IR toggled"; logEv("S1 stop: %s after %lums", s1Why, el); homeStop(); s1Mode = 0; atTop = false; hitBeep(); return; }
+    if (irHit()) { if (!s1IrCnt) s1IrT = millis(); s1IrCnt++; } else s1IrCnt = 0;
+    if (s1IrCnt >= IR_CONFIRM && millis() - s1IrT >= IR_HOLD_MS) {
+      s1Why = "IR detected object"; logEv("S1 stop: %s after %lums", s1Why, el); homeStop(); s1Mode = 0; atTop = false; hitBeep(); return;
     }
   }
   if (el > S1_TIMEOUT_MS) { s1Why = "30 s timeout"; logEv("S1 stop: %s after %lums", s1Why, el); homeStop(); s1Mode = 0; beep(600); }   // safety timeout
@@ -373,8 +376,13 @@ void setup() {
   pinMode(AIN1, OUTPUT); pinMode(AIN2, OUTPUT);
   pinMode(BIN1, OUTPUT); pinMode(BIN2, OUTPUT);
   pinMode(BUZZER, OUTPUT); digitalWrite(BUZZER, LOW);
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcAttachChannel(PWMA, PWM_FREQ, PWM_RES, CH_A);
+  ledcAttachChannel(PWMB, PWM_FREQ, PWM_RES, CH_B);
+#else
   ledcSetup(CH_A, PWM_FREQ, PWM_RES); ledcAttachPin(PWMA, CH_A);
   ledcSetup(CH_B, PWM_FREQ, PWM_RES); ledcAttachPin(PWMB, CH_B);
+#endif
   drive(0, 0);
 
   ESP32PWM::allocateTimer(0); ESP32PWM::allocateTimer(1);
@@ -484,9 +492,33 @@ void setup() {
       }
     } else if (b == "X") {
       logEv("BTN X received (#%u) mode=%d atTop=%d limit=%d ir=%d", ++xCount, s1Mode, atTop, limitPressed(), irHit());
-      s1Start(2);
-      logEv("  -> mode=%d", s1Mode);
-      server.send(200, "text/plain", "X: S1 going DOWN (until IR or limit switch)");
+      if (s1Mode == 2) {
+        s1Why = "X stop";
+        logEv("S1 stop: %s", s1Why);
+        homeStop();
+        s1Mode = 0;
+        server.send(200, "text/plain", "X: S1 STOPPED");
+      } else if (limitStable()) {
+        s1Why = "home switch pressed";
+        homeStop();
+        s1Mode = 0;
+        atTop = false;
+        homed = true;
+        servoAngle[HOME_SERVO] = 0;
+        hitBeep();
+        server.send(200, "text/plain", "X: STOPPED (home switch triggered)");
+      } else if (irHit()) {
+        s1Why = "IR detected object";
+        homeStop();
+        s1Mode = 0;
+        atTop = false;
+        hitBeep();
+        server.send(200, "text/plain", "X: STOPPED (IR detecting object)");
+      } else {
+        s1Start(2);
+        logEv("  -> mode=%d", s1Mode);
+        server.send(200, "text/plain", "X: S1 going DOWN (press X again to stop)");
+      }
     } else if (b == "O") {                    // O = toggle S7 servo open / close
       oOn = !oOn;
       int a = oOn ? O_OPEN : O_CLOSE;
