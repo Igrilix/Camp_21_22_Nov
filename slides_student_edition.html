@@ -3,33 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ESP32 Robotics Camp — สื่อการเรียนรู้การเขียนโค้ดหุ่นยนต์</title>
+  <title>ESP32 Robotics Camp — สไลด์บทเรียนหุ่นยนต์</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --background: #0f172a;
-      --foreground: #f8fafc;
-      --card: #1e293b;
-      --border: #334155;
-      --primary: #38bdf8;
-      --primary-foreground: #0f172a;
-      --secondary: #334155;
-      --secondary-foreground: #f1f5f9;
-      --muted-foreground: #94a3b8;
+    .projector-theme {
+      --bg-page: #f1f5f9;
+      --bg-slide: #ffffff;
+      --bg-box: #f8fafc;
+      --text-main: #0f172a;
+      --text-sub: #334155;
+      --border-strong: #cbd5e1;
+      --blue-brand: #0284c7;
+      --indigo-brand: #4f46e5;
+      --emerald-brand: #059669;
+      --amber-brand: #d97706;
+      --rose-brand: #e11d48;
     }
     pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .slide-fade { animation: fadeIn 0.22s ease-out; }
+    .slide-fade { animation: fadeIn 0.2s ease-out; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes wheelSpinFwd {
       from { background-position-y: 0px; }
-      to { background-position-y: -24px; }
+      to { background-position-y: -28px; }
     }
     @keyframes wheelSpinRev {
       from { background-position-y: 0px; }
-      to { background-position-y: 24px; }
+      to { background-position-y: 28px; }
     }
     @keyframes spin {
       from { transform: rotate(0deg); }
@@ -38,1019 +40,1328 @@
     .tread-pattern {
       background-image: repeating-linear-gradient(
         0deg,
-        transparent,
-        transparent 6px,
-        rgba(148,163,184,0.45) 6px,
-        rgba(148,163,184,0.45) 12px
+        #1e293b,
+        #1e293b 7px,
+        #facc15 7px,
+        #facc15 14px
       );
     }
   </style>
 </head>
-<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-3 md:p-6 m-0 select-none min-h-screen flex flex-col justify-center">
+<body class="projector-theme bg-[#f1f5f9] text-[#0f172a] antialiased p-3 md:p-5 m-0 select-none min-h-screen flex flex-col justify-center">
 
   <div id="deck-root" class="max-w-6xl w-full mx-auto flex flex-col gap-3">
-    <!-- Top Header & Navigation Controls -->
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-sm">
-      <div class="flex items-center gap-2.5">
-        <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">
-          🤖 ESP32 ROBOTICS CAMP
+    <!-- Top Bar: High Contrast & Large Controls -->
+    <div class="bg-white border-2 border-slate-300 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+      <div class="flex items-center gap-3">
+        <span class="px-3.5 py-1.5 rounded-xl text-sm font-black bg-sky-600 text-white tracking-wide shadow-sm">
+          🤖 ESP32 ROBOTICS
         </span>
-        <span id="topic-badge" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        <span id="topic-badge" class="px-3.5 py-1.5 rounded-xl text-sm font-extrabold bg-slate-100 text-slate-800 border border-slate-300">
           บทที่ 1: รู้จักหุ่นยนต์ & ESP32
         </span>
       </div>
 
-      <div class="flex items-center gap-1.5">
-        <button onclick="prevSlide()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 active:scale-95 transition">
+      <div class="flex items-center gap-2">
+        <button onclick="prevSlide()" class="px-4 py-2 rounded-xl text-sm font-extrabold bg-slate-200 text-slate-900 hover:bg-slate-300 active:scale-95 transition">
           ◀ ก่อนหน้า
         </button>
-        <select id="slide-jump" onchange="goToSlide(parseInt(this.value))" class="px-2 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)]">
+        <select id="slide-jump" onchange="goToSlide(parseInt(this.value))" class="px-3 py-2 rounded-xl text-sm font-bold bg-white text-slate-900 border-2 border-slate-300 cursor-pointer">
         </select>
-        <button onclick="nextSlide()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 active:scale-95 transition">
+        <button onclick="nextSlide()" class="px-4 py-2 rounded-xl text-sm font-extrabold bg-sky-600 text-white hover:bg-sky-700 active:scale-95 transition shadow-sm">
           ถัดไป ▶
         </button>
-        <button onclick="toggleFullscreen()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] hover:bg-[var(--secondary)] transition" title="ขยายเต็มจอ (กดปุ่ม F)">
+        <button onclick="toggleFullscreen()" class="px-3.5 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-800 border-2 border-slate-300 hover:bg-slate-200 transition" title="ขยายเต็มจอ (กดปุ่ม F)">
           ⛶ เต็มจอ
         </button>
       </div>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="w-full h-1.5 bg-[var(--secondary)] rounded-full overflow-hidden">
-      <div id="progress-bar" class="h-full bg-[var(--primary)] transition-all duration-300" style="width: 6%"></div>
+    <!-- Thick Progress Bar -->
+    <div class="w-full h-2.5 bg-slate-300 rounded-full overflow-hidden">
+      <div id="progress-bar" class="h-full bg-sky-600 transition-all duration-300" style="width: 6%"></div>
     </div>
 
     <!-- Main Slide Stage -->
-    <div id="slide-stage" class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 md:p-10 shadow-lg min-h-[520px] flex flex-col justify-between slide-fade">
+    <div id="slide-stage" class="bg-white border-2 border-slate-300 rounded-3xl p-6 md:p-10 shadow-md min-h-[540px] flex flex-col justify-between slide-fade">
     </div>
 
-    <!-- Clean Bottom Footer for Audience / Students -->
-    <div class="flex flex-wrap items-center justify-between text-xs text-[var(--muted-foreground)] px-2">
-      <span>💡 ใช้ปุ่มลูกศร <b>◀ / ▶</b> บนคีย์บอร์ด หรือคลิกปุ่มด้านบนเพื่อเปลี่ยนหน้าสไลด์</span>
-      <span id="page-indicator" class="font-mono font-semibold">หน้า 1 / 17</span>
+    <!-- Bottom Footer -->
+    <div class="flex flex-wrap items-center justify-between text-sm font-bold text-slate-600 px-2">
+      <span>💡 กดปุ่มลูกศร <b>◀ / ▶</b> บนคีย์บอร์ดเพื่อเปลี่ยนหน้า | กด <b>F</b> เพื่อเต็มจอ</span>
+      <span id="page-indicator" class="font-mono text-base font-black text-slate-800">หน้า 1 / 17</span>
     </div>
   </div>
 
   <script>
     const slides = [
+      // SLIDE 1
       {
         topic: "บทที่ 1: รู้จักหุ่นยนต์ & ESP32",
-        title: "🤖 สร้างและสั่งงานหุ่นยนต์อัจฉริยะด้วย ESP32",
-        subtitle: "เปลี่ยนมือถือธรรมดา ให้กลายเป็นจอยบังคับหุ่นยนต์ด้วยโค้ดภาษา C/C++",
+        title: "🤖 เขียนโค้ดสั่งงานหุ่นยนต์ด้วย ESP32",
+        subtitle: "เปลี่ยนมือถือเป็นจอยบังคับหุ่นยนต์ผ่าน Wi-Fi ด้วยภาษา C/C++",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-6 items-center my-auto">
-            <div class="space-y-4">
-              <div class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-[var(--secondary)] text-[var(--primary)]">
-                ROBOTICS & CODING WORKSHOP
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <!-- Big Visual Hero Diagram -->
+            <div class="md:col-span-7 bg-gradient-to-br from-sky-50 to-indigo-50 border-2 border-sky-300 rounded-3xl p-6 flex flex-col items-center justify-center text-center space-y-5 shadow-sm">
+              <div class="flex items-center justify-center gap-4 md:gap-6 text-5xl md:text-6xl">
+                <div class="p-4 bg-white rounded-2xl border-2 border-slate-300 shadow-sm">
+                  📱
+                  <div class="text-xs font-black text-slate-700 mt-1">จอยบนมือถือ</div>
+                </div>
+                <div class="text-3xl md:text-4xl font-black text-sky-600 animate-pulse">
+                  🛜 Wi-Fi ➔
+                </div>
+                <div class="p-4 bg-white rounded-2xl border-2 border-sky-500 shadow-sm">
+                  🟦
+                  <div class="text-xs font-black text-sky-700 mt-1">สมอง ESP32</div>
+                </div>
+                <div class="text-3xl md:text-4xl font-black text-emerald-600">
+                  ⚡ ➔
+                </div>
+                <div class="p-4 bg-white rounded-2xl border-2 border-emerald-500 shadow-sm">
+                  🏎️🦾
+                  <div class="text-xs font-black text-emerald-700 mt-1">ล้อ & แขนกล</div>
+                </div>
               </div>
-              <h2 class="text-2xl md:text-4xl font-extrabold leading-tight">
-                ถอดรหัสสมองกล <span class="text-[var(--primary)]">ESP32 Wi-Fi Car</span>
-              </h2>
-              <p class="text-sm md:text-base text-[var(--muted-foreground)] leading-relaxed">
-                มาเรียนรู้วิธีคุยกับหุ่นยนต์ด้วยภาษาโค้ด ตั้งแต่พื้นฐานตัวแปร สัญญาณไฟฟ้า Digital/PWM ไปจนถึงการแกะโค้ดที่ทำงานอยู่ในหุ่นยนต์จริง!
-              </p>
-              <div class="grid grid-cols-2 gap-2.5 pt-2 text-xs">
-                <div class="p-3 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                  <div class="font-bold text-sm">🧠 1. รู้จัก ESP32</div>
-                  <div class="text-[var(--muted-foreground)]">สมองกล + ภาษา C/C++</div>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                  <div class="font-bold text-sm">🧩 2. ท่าไม้ตายโค้ด</div>
-                  <div class="text-[var(--muted-foreground)]">Variable, If/Else, Loop</div>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                  <div class="font-bold text-sm">⚡ 3. Digital & PWM</div>
-                  <div class="text-[var(--muted-foreground)]">เปิด-ปิดไฟ & เหยียบคันเร่ง</div>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                  <div class="font-bold text-sm">🚀 4. ผ่าโค้ดรถจริง!</div>
-                  <div class="text-[var(--muted-foreground)]">แกะโค้ด main.cpp & ทดลองแก้</div>
-                </div>
+              <div class="px-5 py-2.5 rounded-2xl bg-sky-600 text-white font-black text-lg md:text-xl shadow-sm">
+                ไม่ต้องใช้รีโมทแยก! บังคับผ่านเว็บเบราว์เซอร์ได้เลย
               </div>
             </div>
-            <div class="bg-[var(--background)] border border-[var(--border)] rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-4">
-              <div class="text-6xl">📱 🛜 🏎️ 🦾</div>
-              <div class="text-base font-bold">ความสามารถของหุ่นยนต์ในค่ายนี้</div>
-              <ul class="text-xs md:text-sm text-left space-y-2 text-[var(--muted-foreground)] w-full max-w-sm">
-                <li class="flex items-center gap-2">✅ <span>ปล่อย <b>Wi-Fi ("ESP32-CAR")</b> ให้มือถือเข้ามาบังคับได้</span></li>
-                <li class="flex items-center gap-2">✅ <span>ขับเคลื่อน <b>2 ล้อ (ซ้าย-ขวา)</b> เดินหน้า ถอยหลัง หมุนตัว</span></li>
-                <li class="flex items-center gap-2">✅ <span>มี <b>แขนกลยกของ + มือคีบ (Servo)</b> ตั้งองศาได้</span></li>
-                <li class="flex items-center gap-2">✅ <span>มี <b>Limit Switch & IR Sensor</b> หยุดแขนกลอัตโนมัติ</span></li>
-              </ul>
+
+            <!-- 4 Clear Step Pillars -->
+            <div class="md:col-span-5 grid grid-cols-1 gap-3">
+              <div class="p-4 rounded-2xl bg-sky-50 border-2 border-sky-300 flex items-center gap-4">
+                <span class="text-3xl">🧠</span>
+                <div>
+                  <div class="text-lg font-black text-sky-900">1. รู้จักสมองกล ESP32</div>
+                  <div class="text-sm font-bold text-slate-600">Input ➔ Process ➔ Output</div>
+                </div>
+              </div>
+              <div class="p-4 rounded-2xl bg-indigo-50 border-2 border-indigo-300 flex items-center gap-4">
+                <span class="text-3xl">🧩</span>
+                <div>
+                  <div class="text-lg font-black text-indigo-900">2. ท่าไม้ตายโค้ด C/C++</div>
+                  <div class="text-sm font-bold text-slate-600">ตัวแปร • If/Else • Loop • ฟังก์ชัน</div>
+                </div>
+              </div>
+              <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 flex items-center gap-4">
+                <span class="text-3xl">⚡</span>
+                <div>
+                  <div class="text-lg font-black text-emerald-900">3. สัญญาณ Digital & PWM</div>
+                  <div class="text-sm font-bold text-slate-600">เปิด-ปิดไฟ & เหยียบคันเร่ง (0–255)</div>
+                </div>
+              </div>
+              <div class="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-center gap-4">
+                <span class="text-3xl">🚀</span>
+                <div>
+                  <div class="text-lg font-black text-amber-900">4. ผ่าโค้ดหุ่นยนต์จริง!</div>
+                  <div class="text-sm font-bold text-slate-600">แกะโค้ด <code>main.cpp</code> & ลองปรับแต่ง</div>
+                </div>
+              </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 2
       {
         topic: "บทที่ 1: รู้จักหุ่นยนต์ & ESP32",
         title: "🧠 ร่างกายมนุษย์ vs ร่างกายหุ่นยนต์",
-        subtitle: "หุ่นยนต์ทุกตัวในโลก ทำงานด้วย 3 ขั้นตอน: Input ➔ Process ➔ Output",
+        subtitle: "ทำงาน 3 ขั้นตอน: รับค่า (Input) ➔ คิดตัดสินใจ (Process) ➔ แสดงผล (Output)",
         render: () => `
-          <div class="space-y-4 my-auto">
-            <div class="grid md:grid-cols-3 gap-4">
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--border)] hover:border-[var(--primary)] transition flex flex-col justify-between space-y-3">
-                <div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold px-2.5 py-1 rounded bg-[var(--secondary)]">1. INPUT (รับค่า)</span>
-                    <span class="text-xl">👀 ✋</span>
-                  </div>
-                  <h3 class="text-lg font-extrabold mt-2">ประสาทสัมผัส (Sensors)</h3>
-                  <p class="text-xs text-[var(--muted-foreground)] mt-0.5">เหมือนตาและผิวหนัง คอยรับรู้สิ่งที่เกิดขึ้นรอบตัวหุ่นยนต์</p>
-                </div>
+          <div class="grid md:grid-cols-3 gap-5 my-auto">
+            <!-- 1. INPUT -->
+            <div class="p-5 rounded-3xl bg-amber-50 border-2 border-amber-400 flex flex-col justify-between space-y-3 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-black px-3 py-1 rounded-xl bg-amber-500 text-white">1. INPUT (รับค่า)</span>
+                <span class="text-2xl">👀 ✋</span>
+              </div>
+              <div class="text-xl font-black text-amber-950">เซนเซอร์ = ตาและผิวหนัง</div>
 
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-col items-center justify-center">
-                  <svg viewBox="0 0 260 110" class="w-full h-28">
-                    <g transform="translate(12, 18)">
-                      <line x1="12" y1="22" x2="78" y2="4" stroke="#cbd5e1" stroke-width="3.5" stroke-linecap="round"/>
-                      <circle cx="80" cy="4" r="5.5" fill="#ef4444" stroke="#f8fafc" stroke-width="1.5"/>
-                      <rect x="28" y="16" width="12" height="7" rx="1.5" fill="#ef4444"/>
-                      <rect x="8" y="22" width="76" height="40" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
-                      <circle cx="20" cy="52" r="3" fill="#0f172a" stroke="#64748b" stroke-width="1"/>
-                      <circle cx="72" cy="52" r="3" fill="#0f172a" stroke="#64748b" stroke-width="1"/>
-                      <text x="46" y="42" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace" font-weight="bold">LIMIT SW</text>
-                      <rect x="18" y="62" width="5" height="13" rx="1" fill="#eab308"/>
-                      <rect x="43" y="62" width="5" height="13" rx="1" fill="#eab308"/>
-                      <rect x="68" y="62" width="5" height="13" rx="1" fill="#eab308"/>
-                      <text x="46" y="88" text-anchor="middle" fill="currentColor" font-size="9.5" font-weight="bold">Limit Switch</text>
-                    </g>
-
-                    <g transform="translate(138, 12)">
-                      <ellipse cx="34" cy="12" rx="8" ry="10" fill="#38bdf8" fill-opacity="0.85" stroke="#e0f2fe" stroke-width="1.5"/>
-                      <ellipse cx="68" cy="12" rx="8" ry="10" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
-                      <rect x="18" y="20" width="66" height="48" rx="4" fill="#1d4ed8" stroke="#60a5fa" stroke-width="1.5"/>
-                      <rect x="41" y="27" width="20" height="20" rx="2" fill="#2563eb" stroke="#93c5fd" stroke-width="1"/>
-                      <circle cx="51" cy="37" r="6" fill="#f8fafc"/>
-                      <line x1="47" y1="37" x2="55" y2="37" stroke="#1e293b" stroke-width="1.5"/>
-                      <line x1="51" y1="33" x2="51" y2="41" stroke="#1e293b" stroke-width="1.5"/>
-                      <circle cx="28" cy="56" r="3" fill="#22c55e"/>
-                      <circle cx="74" cy="56" r="3" fill="#ef4444"/>
-                      <line x1="36" y1="68" x2="36" y2="81" stroke="#eab308" stroke-width="3"/>
-                      <line x1="51" y1="68" x2="51" y2="81" stroke="#eab308" stroke-width="3"/>
-                      <line x1="66" y1="68" x2="66" y2="81" stroke="#eab308" stroke-width="3"/>
-                      <text x="51" y="94" text-anchor="middle" fill="currentColor" font-size="9.5" font-weight="bold">IR Sensor</text>
-                    </g>
-                  </svg>
-                </div>
-
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs space-y-1">
-                  <div>🔘 <b>Limit Switch (ขา 25):</b> ปุ่มรับรู้เมื่อแขนกลเลื่อนลงสุด</div>
-                  <div>🔴 <b>IR Sensor (ขา 26):</b> ตาอินฟราเรดตรวจจับวัตถุ</div>
-                  <div>📱 <b>คำสั่งจากจอยมือถือ:</b> ส่งผ่าน Wi-Fi</div>
-                </div>
+              <!-- High-Contrast Hardware SVG -->
+              <div class="p-3 rounded-2xl bg-white border-2 border-amber-300 flex items-center justify-center">
+                <svg viewBox="0 0 260 115" class="w-full h-32">
+                  <!-- Limit Switch -->
+                  <g transform="translate(12, 16)">
+                    <line x1="12" y1="24" x2="78" y2="5" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="80" cy="5" r="6.5" fill="#dc2626" stroke="#991b1b" stroke-width="1.5"/>
+                    <rect x="28" y="17" width="13" height="8" rx="1.5" fill="#dc2626"/>
+                    <rect x="8" y="24" width="76" height="42" rx="5" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    <text x="46" y="48" text-anchor="middle" fill="#f8fafc" font-size="9.5" font-family="monospace" font-weight="bold">LIMIT SW</text>
+                    <rect x="18" y="66" width="6" height="14" rx="1" fill="#d97706"/>
+                    <rect x="43" y="66" width="6" height="14" rx="1" fill="#d97706"/>
+                    <rect x="68" y="66" width="6" height="14" rx="1" fill="#d97706"/>
+                    <text x="46" y="94" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="900">Limit Switch</text>
+                  </g>
+                  <!-- IR Sensor -->
+                  <g transform="translate(138, 12)">
+                    <ellipse cx="34" cy="12" rx="9" ry="11" fill="#0284c7" stroke="#0369a1" stroke-width="1.5"/>
+                    <ellipse cx="68" cy="12" rx="9" ry="11" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+                    <rect x="18" y="21" width="66" height="48" rx="5" fill="#1d4ed8" stroke="#1e40af" stroke-width="2"/>
+                    <rect x="41" y="28" width="20" height="20" rx="2" fill="#3b82f6" stroke="#eff6ff" stroke-width="1.5"/>
+                    <circle cx="51" cy="38" r="6" fill="#ffffff"/>
+                    <line x1="47" y1="38" x2="55" y2="38" stroke="#0f172a" stroke-width="2"/>
+                    <line x1="51" y1="34" x2="51" y2="42" stroke="#0f172a" stroke-width="2"/>
+                    <circle cx="28" cy="57" r="3.5" fill="#22c55e"/>
+                    <circle cx="74" cy="57" r="3.5" fill="#ef4444"/>
+                    <line x1="36" y1="69" x2="36" y2="83" stroke="#d97706" stroke-width="3.5"/>
+                    <line x1="51" y1="69" x2="51" y2="83" stroke="#d97706" stroke-width="3.5"/>
+                    <line x1="66" y1="69" x2="66" y2="83" stroke="#d97706" stroke-width="3.5"/>
+                    <text x="51" y="98" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="900">IR Sensor</text>
+                  </g>
+                </svg>
               </div>
 
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)] flex flex-col justify-between space-y-3 shadow-sm">
-                <div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold px-2.5 py-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)]">2. PROCESS (คิดตัดสินใจ)</span>
-                    <span class="text-xl">🧠 ⚡</span>
-                  </div>
-                  <h3 class="text-lg font-extrabold mt-2">สมองกล (Controller)</h3>
-                  <p class="text-xs text-[var(--muted-foreground)] mt-0.5">รับข้อมูลจากเซนเซอร์ มาคิดตามโค้ดที่เราเขียน แล้วสั่งให้ร่างกายขยับ</p>
-                </div>
+              <div class="space-y-1.5 text-sm font-bold text-slate-800">
+                <div>🔘 <b>Limit Switch (ขา 25):</b> ปุ่มเช็กว่าชนหรือยัง</div>
+                <div>🔴 <b>IR Sensor (ขา 26):</b> ตาตรวจจับวัตถุ</div>
+                <div>📱 <b>จอยมือถือ:</b> ส่งคำสั่งผ่าน Wi-Fi</div>
+              </div>
+            </div>
 
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-col items-center justify-center">
-                  <svg viewBox="0 0 260 110" class="w-full h-28">
-                    <g transform="translate(25, 12)">
-                      <rect x="10" y="6" width="190" height="68" rx="5" fill="#0f172a" stroke="#475569" stroke-width="2"/>
-                      <g fill="#eab308">
-                        <rect x="42" y="1" width="4" height="7" rx="1"/><rect x="52" y="1" width="4" height="7" rx="1"/><rect x="62" y="1" width="4" height="7" rx="1"/><rect x="72" y="1" width="4" height="7" rx="1"/><rect x="82" y="1" width="4" height="7" rx="1"/><rect x="92" y="1" width="4" height="7" rx="1"/><rect x="102" y="1" width="4" height="7" rx="1"/><rect x="112" y="1" width="4" height="7" rx="1"/><rect x="122" y="1" width="4" height="7" rx="1"/><rect x="132" y="1" width="4" height="7" rx="1"/><rect x="142" y="1" width="4" height="7" rx="1"/><rect x="152" y="1" width="4" height="7" rx="1"/><rect x="162" y="1" width="4" height="7" rx="1"/><rect x="172" y="1" width="4" height="7" rx="1"/>
-                        <rect x="42" y="72" width="4" height="7" rx="1"/><rect x="52" y="72" width="4" height="7" rx="1"/><rect x="62" y="72" width="4" height="7" rx="1"/><rect x="72" y="72" width="4" height="7" rx="1"/><rect x="82" y="72" width="4" height="7" rx="1"/><rect x="92" y="72" width="4" height="7" rx="1"/><rect x="102" y="72" width="4" height="7" rx="1"/><rect x="112" y="72" width="4" height="7" rx="1"/><rect x="122" y="72" width="4" height="7" rx="1"/><rect x="132" y="72" width="4" height="7" rx="1"/><rect x="142" y="72" width="4" height="7" rx="1"/><rect x="152" y="72" width="4" height="7" rx="1"/><rect x="162" y="72" width="4" height="7" rx="1"/><rect x="172" y="72" width="4" height="7" rx="1"/>
-                      </g>
-                      <rect x="2" y="27" width="16" height="26" rx="3" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
-                      <rect x="24" y="14" width="8" height="10" rx="1" fill="#94a3b8"/>
-                      <circle cx="28" cy="19" r="2.5" fill="#1e293b"/>
-                      <rect x="24" y="56" width="8" height="10" rx="1" fill="#94a3b8"/>
-                      <circle cx="28" cy="61" r="2.5" fill="#1e293b"/>
-                      <circle cx="48" cy="40" r="3" fill="#ef4444"/>
-                      <rect x="60" y="31" width="18" height="18" rx="2" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-                      <rect x="92" y="15" width="72" height="50" rx="3" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
-                      <text x="128" y="38" text-anchor="middle" fill="#0f172a" font-size="10" font-family="monospace" font-weight="bold">ESP32</text>
-                      <text x="128" y="50" text-anchor="middle" fill="#334155" font-size="7.5" font-family="monospace">Wi-Fi + BT</text>
-                      <rect x="166" y="15" width="28" height="50" rx="2" fill="#020617" stroke="#334155" stroke-width="1"/>
-                      <path d="M 171 22 L 188 22 L 188 29 L 173 29 L 173 36 L 188 36 L 188 43 L 173 43 L 173 50 L 188 50 L 188 58"
-                            fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="square"/>
-                      <text x="105" y="94" text-anchor="middle" fill="var(--primary)" font-size="10" font-weight="bold">บอร์ดสมองกล ESP32 (38 ขา GPIO)</text>
+            <!-- 2. PROCESS -->
+            <div class="p-5 rounded-3xl bg-sky-50 border-4 border-sky-500 flex flex-col justify-between space-y-3 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-black px-3 py-1 rounded-xl bg-sky-600 text-white">2. PROCESS (คิด)</span>
+                <span class="text-2xl">🧠 ⚡</span>
+              </div>
+              <div class="text-xl font-black text-sky-950">สมองกล = บอร์ด ESP32</div>
+
+              <!-- High-Contrast ESP32 SVG -->
+              <div class="p-3 rounded-2xl bg-white border-2 border-sky-300 flex items-center justify-center">
+                <svg viewBox="0 0 260 115" class="w-full h-32">
+                  <g transform="translate(25, 12)">
+                    <rect x="10" y="8" width="190" height="68" rx="6" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+                    <g fill="#f59e0b">
+                      <rect x="42" y="1" width="4.5" height="8" rx="1"/><rect x="54" y="1" width="4.5" height="8" rx="1"/><rect x="66" y="1" width="4.5" height="8" rx="1"/><rect x="78" y="1" width="4.5" height="8" rx="1"/><rect x="90" y="1" width="4.5" height="8" rx="1"/><rect x="102" y="1" width="4.5" height="8" rx="1"/><rect x="114" y="1" width="4.5" height="8" rx="1"/><rect x="126" y="1" width="4.5" height="8" rx="1"/><rect x="138" y="1" width="4.5" height="8" rx="1"/><rect x="150" y="1" width="4.5" height="8" rx="1"/><rect x="162" y="1" width="4.5" height="8" rx="1"/>
+                      <rect x="42" y="74" width="4.5" height="8" rx="1"/><rect x="54" y="74" width="4.5" height="8" rx="1"/><rect x="66" y="74" width="4.5" height="8" rx="1"/><rect x="78" y="74" width="4.5" height="8" rx="1"/><rect x="90" y="74" width="4.5" height="8" rx="1"/><rect x="102" y="74" width="4.5" height="8" rx="1"/><rect x="114" y="74" width="4.5" height="8" rx="1"/><rect x="126" y="74" width="4.5" height="8" rx="1"/><rect x="138" y="74" width="4.5" height="8" rx="1"/><rect x="150" y="74" width="4.5" height="8" rx="1"/><rect x="162" y="74" width="4.5" height="8" rx="1"/>
                     </g>
-                  </svg>
-                </div>
-
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs space-y-1">
-                  <div>🟦 <b>บอร์ด ESP32:</b> สมองกลหลักที่รันโค้ดภาษา C/C++</div>
-                  <div>💭 <i>"ถ้ากดปุ่ม O ➔ สั่งมือคีบหนีบ!"</i></div>
-                  <div>💭 <i>"ถ้าชนสวิตช์ ➔ สั่งหยุดมอเตอร์ทันที!"</i></div>
-                </div>
+                    <rect x="2" y="29" width="16" height="26" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+                    <circle cx="48" cy="42" r="4" fill="#ef4444"/>
+                    <rect x="88" y="17" width="76" height="50" rx="4" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <text x="126" y="40" text-anchor="middle" fill="#0f172a" font-size="12" font-family="monospace" font-weight="900">ESP32</text>
+                    <text x="126" y="54" text-anchor="middle" fill="#0284c7" font-size="9" font-family="monospace" font-weight="bold">Wi-Fi + BT</text>
+                    <rect x="166" y="17" width="28" height="50" rx="2" fill="#1e293b"/>
+                    <path d="M 171 24 L 188 24 L 188 31 L 173 31 L 173 38 L 188 38 L 188 45 L 173 45 L 173 52 L 188 52 L 188 60"
+                          fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="square"/>
+                    <text x="105" y="98" text-anchor="middle" fill="#0369a1" font-size="11" font-weight="900">บอร์ด ESP32 (รันโค้ด C++)</text>
+                  </g>
+                </svg>
               </div>
 
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--border)] hover:border-[var(--primary)] transition flex flex-col justify-between space-y-3">
-                <div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold px-2.5 py-1 rounded bg-[var(--secondary)]">3. OUTPUT (แสดงผล)</span>
-                    <span class="text-xl">🦵 🦾 🔊</span>
-                  </div>
-                  <h3 class="text-lg font-extrabold mt-2">กล้ามเนื้อและเสียง (Actuators)</h3>
-                  <p class="text-xs text-[var(--muted-foreground)] mt-0.5">เหมือนแขน ขา และปาก ที่ขยับหรือส่งเสียงตามคำสั่งสมอง</p>
-                </div>
+              <div class="space-y-1.5 text-sm font-bold text-slate-800">
+                <div>🟦 <b>รับค่าจาก Input</b> มาคิดตามโค้ด</div>
+                <div>💭 <i>"กดปุ่ม O ➔ สั่งกางมือคีบ!"</i></div>
+                <div>💭 <i>"ชนสวิตช์ ➔ หยุดมอเตอร์ทันที!"</i></div>
+              </div>
+            </div>
 
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-col items-center justify-center">
-                  <svg viewBox="0 0 260 110" class="w-full h-28">
-                    <g transform="translate(8, 12)">
-                      <rect x="8" y="22" width="54" height="32" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
-                      <path d="M 62 25 L 88 25 A 12 13 0 0 1 88 51 L 62 51 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
-                      <rect x="20" y="13" width="8" height="9" fill="#f8fafc" stroke="#94a3b8" stroke-width="1"/>
-                      <rect x="4" y="3" width="40" height="12" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                      <line x1="12" y1="3" x2="12" y2="15" stroke="#475569" stroke-width="2"/>
-                      <line x1="24" y1="3" x2="24" y2="15" stroke="#475569" stroke-width="2"/>
-                      <line x1="36" y1="3" x2="36" y2="15" stroke="#475569" stroke-width="2"/>
-                      <path d="M 94 32 Q 104 32 104 42" fill="none" stroke="#ef4444" stroke-width="2"/>
-                      <path d="M 94 44 Q 102 44 102 54" fill="none" stroke="#64748b" stroke-width="2"/>
-                      <text x="50" y="94" text-anchor="middle" fill="currentColor" font-size="9.5" font-weight="bold">DC Motor + ล้อ</text>
-                    </g>
+            <!-- 3. OUTPUT -->
+            <div class="p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-400 flex flex-col justify-between space-y-3 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-black px-3 py-1 rounded-xl bg-emerald-600 text-white">3. OUTPUT (ทำ)</span>
+                <span class="text-2xl">🦵 🦾 🔊</span>
+              </div>
+              <div class="text-xl font-black text-emerald-950">มอเตอร์ & ลำโพง = แขนขา</div>
 
-                    <g transform="translate(124, 14)">
-                      <rect x="12" y="4" width="46" height="9" rx="4.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
-                      <circle cx="26" cy="8.5" r="3" fill="#334155"/>
-                      <circle cx="40" cy="8.5" r="1.5" fill="#64748b"/>
-                      <circle cx="50" cy="8.5" r="1.5" fill="#64748b"/>
-                      <rect x="20" y="13" width="12" height="6" fill="#1e293b"/>
-                      <rect x="2" y="28" width="64" height="7" rx="1.5" fill="#334155" stroke="#64748b" stroke-width="1"/>
-                      <rect x="10" y="18" width="48" height="44" rx="3" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
-                      <text x="34" y="45" text-anchor="middle" fill="#38bdf8" font-size="8" font-family="monospace" font-weight="bold">SERVO</text>
-                      <text x="34" y="55" text-anchor="middle" fill="#94a3b8" font-size="7" font-family="monospace">0-180°</text>
-                      <text x="34" y="92" text-anchor="middle" fill="currentColor" font-size="9.5" font-weight="bold">Servo Motor</text>
-                    </g>
+              <!-- High-Contrast Actuators SVG -->
+              <div class="p-3 rounded-2xl bg-white border-2 border-emerald-300 flex items-center justify-center">
+                <svg viewBox="0 0 260 115" class="w-full h-32">
+                  <!-- TT Motor -->
+                  <g transform="translate(8, 12)">
+                    <rect x="8" y="24" width="54" height="32" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <path d="M 62 27 L 88 27 A 12 13 0 0 1 88 53 L 62 53 Z" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+                    <rect x="20" y="15" width="8" height="9" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+                    <rect x="4" y="3" width="42" height="13" rx="3" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+                    <text x="50" y="98" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="900">DC Motor</text>
+                  </g>
+                  <!-- Servo -->
+                  <g transform="translate(122, 14)">
+                    <rect x="10" y="4" width="48" height="10" rx="5" fill="#ffffff" stroke="#475569" stroke-width="2"/>
+                    <circle cx="26" cy="9" r="3" fill="#0f172a"/>
+                    <rect x="2" y="29" width="64" height="7" rx="1.5" fill="#334155"/>
+                    <rect x="10" y="18" width="48" height="46" rx="4" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    <text x="34" y="45" text-anchor="middle" fill="#38bdf8" font-size="9" font-family="monospace" font-weight="900">SERVO</text>
+                    <text x="34" y="57" text-anchor="middle" fill="#f8fafc" font-size="8" font-family="monospace">0-180°</text>
+                    <text x="34" y="96" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="900">Servo</text>
+                  </g>
+                  <!-- Buzzer -->
+                  <g transform="translate(202, 22)">
+                    <ellipse cx="24" cy="32" rx="18" ry="18" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    <circle cx="24" cy="32" r="5" fill="#64748b"/>
+                    <path d="M 15 7 Q 24 0 33 7" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+                    <text x="24" y="88" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="900">Buzzer</text>
+                  </g>
+                </svg>
+              </div>
 
-                    <g transform="translate(202, 22)">
-                      <ellipse cx="24" cy="30" rx="18" ry="18" fill="#0f172a" stroke="#64748b" stroke-width="2"/>
-                      <circle cx="24" cy="30" r="5" fill="#334155" stroke="#94a3b8" stroke-width="1"/>
-                      <text x="34" y="21" fill="#f8fafc" font-size="9" font-weight="bold">+</text>
-                      <path d="M 16 6 Q 24 0 32 6" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
-                      <path d="M 11 1 Q 24 -7 37 1" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
-                      <text x="24" y="84" text-anchor="middle" fill="currentColor" font-size="9.5" font-weight="bold">Buzzer</text>
-                    </g>
-                  </svg>
-                </div>
-
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs space-y-1">
-                  <div>🛞 <b>DC Motor ซ้าย-ขวา:</b> ขับเคลื่อนล้อหมุนเดินหน้า/ถอยหลัง</div>
-                  <div>🦾 <b>Servo Motor:</b> แขนยกของ (S1) และมือคีบ (S7)</div>
-                  <div>🔔 <b>Buzzer (ขา 15):</b> ลำโพงส่งเสียงปี๊บ</div>
-                </div>
+              <div class="space-y-1.5 text-sm font-bold text-slate-800">
+                <div>🛞 <b>DC Motor:</b> หมุนล้อซ้าย-ขวา</div>
+                <div>🦾 <b>Servo Motor:</b> แขนยก (S1) & มือคีบ (S7)</div>
+                <div>🔔 <b>Buzzer (ขา 15):</b> ลำโพงร้องปี๊บ</div>
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 3
       {
         topic: "บทที่ 1: รู้จักหุ่นยนต์ & ESP32",
-        title: "🟦 ทำไมต้องบอร์ด ESP32 และภาษา C/C++?",
-        subtitle: "รู้จักสมองกลและภาษาที่เราใช้คุยกับหุ่นยนต์",
+        title: "🟦 รู้จักบอร์ด ESP32 และขาพิน GPIO",
+        subtitle: "GPIO คือ 'ขาเหล็กสีทองข้างบอร์ด' ที่ใช้เสียบสายไฟคุยกับเซนเซอร์และมอเตอร์",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-6 my-auto">
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">HARDWARE (สมองกล)</div>
-              <h3 class="text-xl font-extrabold">ทำไมต้องบอร์ด ESP32?</h3>
-              <ul class="space-y-2.5 text-sm">
-                <li class="flex items-start gap-2.5">
-                  <span class="text-lg">🛜</span>
-                  <div><b>มี Wi-Fi และ Bluetooth ในตัว:</b> สร้างเว็บเซิร์ฟเวอร์ในตัวรถ ให้มือถือเกาะ Wi-Fi เข้ามาบังคับได้โดยไม่ต้องซื้อรีโมทแยก</div>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <span class="text-lg">🔌</span>
-                  <div><b>มีขา GPIO เยอะและเก่งมาก:</b> คำว่า <b>GPIO</b> ย่อมาจาก <i>General Purpose Input/Output</i> คือขาเหล็กข้างบอร์ดที่เราสั่งให้ "อ่านค่าไฟ" หรือ "ปล่อยไฟ" ก็ได้</div>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <span class="text-lg">⚡</span>
-                  <div><b>ความเร็วสูง:</b> คิดคำนวณได้ถึง 240 ล้านครั้งต่อวินาที (240 MHz)</div>
-                </li>
-              </ul>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">SOFTWARE (ภาษาโค้ด)</div>
-              <h3 class="text-xl font-extrabold">คุยกับหุ่นยนต์ด้วยภาษา C / C++</h3>
-              <p class="text-xs text-[var(--muted-foreground)]">
-                สมองกลรู้จักแค่ไฟฟ้า <b>เปิด (1)</b> กับ <b>ปิด (0)</b> เราจึงใช้ภาษา <b>C/C++ (Arduino)</b> เขียนเป็นภาษาอังกฤษสั้นๆ แล้วแปลส่งเข้าบอร์ด:
-              </p>
-              <div class="p-3.5 rounded-xl bg-[var(--card)] border border-[var(--border)] font-mono text-xs space-y-2">
-                <div class="text-[var(--muted-foreground)]">// ตัวอย่างการกำหนดเลขขา GPIO ใน main.cpp</div>
-                <div><span class="text-[var(--primary)] font-bold">const int</span> BUZZER = <span class="font-bold">15</span>; <span class="text-[var(--muted-foreground)]">// ลำโพงต่อขา 15</span></div>
-                <div><span class="text-[var(--primary)] font-bold">const int</span> LIMIT_PIN = <span class="font-bold">25</span>; <span class="text-[var(--muted-foreground)]">// สวิตช์ชนต่อขา 25</span></div>
-                <div><span class="text-[var(--primary)] font-bold">const int</span> IR_PIN = <span class="font-bold">26</span>; <span class="text-[var(--muted-foreground)]">// เซนเซอร์ IR ต่อขา 26</span></div>
-              </div>
-              <div class="text-xs p-2.5 rounded-lg bg-[var(--secondary)]">
-                💡 <b>กฎเหล็ก:</b> ทุกคำสั่งในภาษา C/C++ ต้องจบประโยคด้วยเครื่องหมาย <b>เซมิโคลอน (<code>;</code>)</b> เสมอ เหมือนจุด Full Stop ในภาษาอังกฤษ!
-              </div>
-            </div>
-          </div>
-        `
-      },
-      {
-        topic: "บทที่ 2: พื้นฐานโค้ด 4 ท่าไม้ตาย",
-        title: "📦 ท่าไม้ตายที่ 1: ตัวแปร (Variables) & Array",
-        subtitle: "ตัวแปร คือ 'กล่องเก็บข้อมูลที่มีป้ายชื่อแปะไว้' เพื่อให้หุ่นยนต์จำค่าต่างๆ ได้",
-        render: () => `
-          <div class="space-y-4 my-auto">
-            <div class="grid md:grid-cols-2 gap-4">
-              <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono font-bold text-sm px-2 py-0.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)]">int</span>
-                  <span class="text-xs text-[var(--muted-foreground)]">Integer = จำนวนเต็ม (ไม่มีจุดทศนิยม)</span>
-                </div>
-                <p class="text-xs">ใช้เก็บเลขขาพิน, ความเร็วมอเตอร์ (-255 ถึง 255), หรือมุมเซอร์โว (0 ถึง 180 องศา)</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>int STOP_US = 1500;
-int O_OPEN = 90;   // มุมกางมือคีบ 90 องศา</code></pre>
-              </div>
-
-              <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono font-bold text-sm px-2 py-0.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)]">bool</span>
-                  <span class="text-xs text-[var(--muted-foreground)]">Boolean = จริง (true) หรือ เท็จ (false)</span>
-                </div>
-                <p class="text-xs">ใช้จำสถานะแบบ 2 ทางเลือก เช่น ตั้งศูนย์เสร็จหรือยัง? หรือมือคีบกำลังอ้าอยู่ไหม?</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>bool homed = false; // ตอนเปิดเครื่อง ยังไม่ได้ตั้งศูนย์
-bool oOn = false;   // สถานะปุ่ม O (เปิด/ปิดมือคีบ)</code></pre>
-              </div>
-
-              <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono font-bold text-sm px-2 py-0.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)]">float</span>
-                  <span class="text-xs text-[var(--muted-foreground)]">Floating-point = ตัวเลขทศนิยม</span>
-                </div>
-                <p class="text-xs">ใช้เมื่อต้องการความละเอียด เช่น ความเร็วการหมุนกี่องศาต่อวินาที</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>float DEG_PER_SEC = 60.0; // หมุน 60.0 องศาต่อวินาที</code></pre>
-              </div>
-
-              <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono font-bold text-sm px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--foreground)]">Array [ ]</span>
-                  <span class="text-xs text-[var(--muted-foreground)]">ตู้ล็อกเกอร์เรียงต่อกัน (นับช่องแรกที่เลข 0)</span>
-                </div>
-                <p class="text-xs">เก็บข้อมูลหลายๆ ตัวในชื่อเดียว เช่น ขาเซอร์โวทั้ง 7 ช่อง (บรรทัดที่ 22 ใน <code>main.cpp</code>):</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>const int SERVO_PINS[7] = {22, 27, 25, 12, 13, 14, 23};
-// ช่อง [0] คือขา 22 (S1) | ช่อง [6] คือขา 23 (มือคีบ)</code></pre>
-              </div>
-            </div>
-          </div>
-        `
-      },
-      {
-        topic: "บทที่ 2: พื้นฐานโค้ด 4 ท่าไม้ตาย",
-        title: "🔀 ท่าไม้ตายที่ 2: เงื่อนไข (If / Else)",
-        subtitle: "สอนให้หุ่นยนต์คิดและตัดสินใจเองว่า 'ถ้าเจอเหตุการณ์นี้ จะทำอย่างไร'",
-        render: () => `
-          <div class="grid md:grid-cols-2 gap-6 items-center my-auto">
-            <div class="space-y-3">
-              <h3 class="text-lg font-bold">โครงสร้างการตัดสินใจ</h3>
-              <p class="text-xs text-[var(--muted-foreground)]">
-                ถ้าเงื่อนไขในวงเล็บ <code>( ... )</code> เป็นจริง (<code>true</code>) หุ่นยนต์จะทำคำสั่งในปีกกาแรก แต่ถ้าไม่ใช่ จะข้ามไปทำใน <code>else</code>
-              </p>
-              <pre class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>// ตัวอย่างการเช็กปุ่มชนและมือคีบจาก main.cpp
-if (limitPressed() == true) {
-    hitBeep();       // 🔊 ร้องปี๊บเตือน!
-    homeStop();      // 🛑 หยุดมอเตอร์แขนกลทันที
-} else {
-    // ถ้ายังไม่ชน ก็ให้เคลื่อนที่ต่อไปได้
-}</code></pre>
-              <div class="p-3 rounded-xl bg-[var(--secondary)] text-xs space-y-1">
-                <div class="font-bold">เครื่องหมายเปรียบเทียบที่ใช้บ่อยใน <code>if (...)</code>:</div>
-                <div class="grid grid-cols-2 gap-1 font-mono">
-                  <span><code>==</code> เท่ากับ</span>
-                  <span><code>!=</code> ไม่เท่ากับ</span>
-                  <span><code>&gt;</code> มากกว่า</span>
-                  <span><code>&lt;</code> น้อยกว่า</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-4">
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <!-- Left: Big Visual ESP32 Board with Callout Labels & Pin Mapping -->
+            <div class="md:col-span-7 p-5 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-3 shadow-sm">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-[var(--primary)]">🎮 ลองกดจำลองการทำงานของ If / Else</span>
-                <span id="if-sim-badge" class="px-2 py-0.5 rounded text-xs font-mono bg-[var(--secondary)]">limitPressed() = false</span>
+                <span class="text-base font-black text-sky-950">🔍 หน้าตาบอร์ด ESP32 ของจริง & ตำแหน่งขา GPIO</span>
+                <span class="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-black">ขาเหล็กสีทอง = GPIO</span>
               </div>
-              <div class="flex gap-2">
-                <button onclick="setIfSim(false)" id="btn-if-false" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] transition">
-                  🟢 สวิตช์ยังไม่โดนกด (false)
+
+              <div class="bg-white border-2 border-sky-300 rounded-2xl p-3 flex items-center justify-center">
+                <svg viewBox="0 0 540 300" class="w-full h-64 md:h-72 overflow-visible">
+                  <!-- Callout: What is GPIO? (Top Banner) -->
+                  <rect x="165" y="4" width="210" height="24" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                  <text x="270" y="20" text-anchor="middle" fill="#92400e" font-size="11" font-weight="900">✨ ขาเหล็กสีทอง 2 ฝั่ง = ขาพิน GPIO</text>
+                  <path d="M 210 28 L 222 52" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3 2"/>
+                  <path d="M 330 28 L 318 52" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3 2"/>
+
+                  <!-- Main ESP32 PCB Board (Vertical Orientation) -->
+                  <rect x="215" y="40" width="110" height="225" rx="8" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+
+                  <!-- RF Shield (ESP-WROOM-32) -->
+                  <rect x="231" y="68" width="78" height="82" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                  <text x="270" y="104" text-anchor="middle" fill="#0f172a" font-size="13" font-family="monospace" font-weight="900">ESP32</text>
+                  <text x="270" y="120" text-anchor="middle" fill="#0284c7" font-size="9.5" font-family="monospace" font-weight="900">Wi-Fi + BT</text>
+                  <text x="270" y="136" text-anchor="middle" fill="#475569" font-size="8" font-weight="bold">ชิปสมองกลหลัก</text>
+
+                  <!-- Top Wi-Fi PCB Antenna -->
+                  <rect x="235" y="44" width="70" height="22" rx="2" fill="#020617" stroke="#334155" stroke-width="1"/>
+                  <path d="M 242 62 L 242 49 L 252 49 L 252 60 L 262 60 L 262 49 L 272 49 L 272 60 L 282 60 L 282 49 L 296 49"
+                        fill="none" stroke="#eab308" stroke-width="2.2" stroke-linecap="square"/>
+
+                  <!-- Regulator & Serial Chip -->
+                  <rect x="253" y="164" width="34" height="24" rx="2" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+                  <circle cx="295" cy="212" r="4" fill="#ef4444"/>
+                  <text x="270" y="215" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">PWR LED</text>
+
+                  <!-- BOOT & EN Buttons -->
+                  <rect x="229" y="226" width="16" height="12" rx="2" fill="#e2e8f0" stroke="#475569" stroke-width="1"/>
+                  <circle cx="237" cy="232" r="3" fill="#0f172a"/>
+                  <text x="237" y="248" text-anchor="middle" fill="#cbd5e1" font-size="7" font-family="monospace">EN</text>
+
+                  <rect x="295" y="226" width="16" height="12" rx="2" fill="#e2e8f0" stroke="#475569" stroke-width="1"/>
+                  <circle cx="303" cy="232" r="3" fill="#0f172a"/>
+                  <text x="303" y="248" text-anchor="middle" fill="#cbd5e1" font-size="7" font-family="monospace">BOOT</text>
+
+                  <!-- Bottom USB Port -->
+                  <rect x="252" y="252" width="36" height="20" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+                  <text x="270" y="288" text-anchor="middle" fill="#0369a1" font-size="11" font-weight="900">🔌 ช่องเสียบสาย USB (อัปโหลดโค้ด)</text>
+
+                  <!-- LEFT GOLD GPIO PINS -->
+                  <g fill="#f59e0b" stroke="#b45309" stroke-width="1">
+                    <rect x="203" y="60"  width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="84"  width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="108" width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="132" width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="156" width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="180" width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="204" width="14" height="8" rx="1.5"/>
+                    <rect x="203" y="228" width="14" height="8" rx="1.5"/>
+                  </g>
+
+                  <!-- RIGHT GOLD GPIO PINS -->
+                  <g fill="#f59e0b" stroke="#b45309" stroke-width="1">
+                    <rect x="323" y="60"  width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="84"  width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="108" width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="132" width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="156" width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="180" width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="204" width="14" height="8" rx="1.5"/>
+                    <rect x="323" y="228" width="14" height="8" rx="1.5"/>
+                  </g>
+
+                  <!-- LEFT CALLOUTS (INPUTS + POWER) -->
+                  <line x1="168" y1="64" x2="203" y2="64" stroke="#64748b" stroke-width="2"/>
+                  <rect x="8" y="50" width="160" height="28" rx="7" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+                  <text x="88" y="68" text-anchor="middle" fill="#334155" font-size="10.5" font-weight="900">⚡ ขาไฟเลี้ยง 3.3V / GND</text>
+
+                  <line x1="168" y1="112" x2="203" y2="112" stroke="#d97706" stroke-width="2.5"/>
+                  <rect x="8" y="96" width="160" height="32" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                  <text x="88" y="116" text-anchor="middle" fill="#92400e" font-size="11" font-weight="900">🔘 GPIO 25 ➔ ปุ่มสวิตช์ชน</text>
+
+                  <line x1="168" y1="160" x2="203" y2="160" stroke="#d97706" stroke-width="2.5"/>
+                  <rect x="8" y="144" width="160" height="32" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                  <text x="88" y="164" text-anchor="middle" fill="#92400e" font-size="11" font-weight="900">🔴 GPIO 26 ➔ เซนเซอร์ IR</text>
+
+                  <line x1="168" y1="208" x2="203" y2="208" stroke="#059669" stroke-width="2.5"/>
+                  <rect x="8" y="192" width="160" height="32" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                  <text x="88" y="212" text-anchor="middle" fill="#065f46" font-size="11" font-weight="900">🔔 GPIO 15 ➔ ลำโพงปี๊บ</text>
+
+                  <!-- RIGHT CALLOUTS (OUTPUTS: SERVOS & MOTORS) -->
+                  <line x1="337" y1="88" x2="372" y2="88" stroke="#0284c7" stroke-width="2.5"/>
+                  <rect x="372" y="72" width="160" height="32" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+                  <text x="452" y="92" text-anchor="middle" fill="#075985" font-size="11" font-weight="900">🦀 GPIO 23 ➔ เซอร์โวมือคีบ</text>
+
+                  <line x1="337" y1="136" x2="372" y2="136" stroke="#0284c7" stroke-width="2.5"/>
+                  <rect x="372" y="120" width="160" height="32" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+                  <text x="452" y="140" text-anchor="middle" fill="#075985" font-size="11" font-weight="900">🦾 GPIO 22 ➔ เซอร์โวยกแขน</text>
+
+                  <line x1="337" y1="184" x2="372" y2="184" stroke="#059669" stroke-width="2.5"/>
+                  <rect x="372" y="168" width="160" height="32" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                  <text x="452" y="188" text-anchor="middle" fill="#065f46" font-size="11" font-weight="900">🛞 GPIO 18–21 ➔ ล้อซ้าย</text>
+
+                  <line x1="337" y1="232" x2="372" y2="232" stroke="#059669" stroke-width="2.5"/>
+                  <rect x="372" y="216" width="160" height="32" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                  <text x="452" y="236" text-anchor="middle" fill="#065f46" font-size="11" font-weight="900">🛞 GPIO 4,16,17 ➔ ล้อขวา</text>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Right: Simple Explanation of GPIO + Code -->
+            <div class="md:col-span-5 space-y-4">
+              <div class="p-4 rounded-3xl bg-amber-50 border-2 border-amber-400 space-y-1.5 shadow-sm">
+                <div class="text-base font-black text-amber-950">💡 ขา GPIO คืออะไร?</div>
+                <p class="text-sm font-bold text-slate-800 leading-relaxed">
+                  ขาเหล็กสีทองข้างบอร์ดแต่ละขาจะมี <b>"หมายเลขประจำตัว"</b> (เช่น ขา 15, ขา 25) เอาไว้เสียบสายไฟเพื่อ <b>รับค่าเซนเซอร์</b> หรือ <b>จ่ายไฟให้มอเตอร์</b>
+                </p>
+              </div>
+
+              <div class="p-5 rounded-3xl bg-slate-900 text-slate-100 border-2 border-slate-700 shadow-md space-y-2">
+                <div class="text-xs font-bold text-sky-400">เวลาเขียนโค้ด เราแค่บอกเลขขา GPIO ให้ตรงกัน:</div>
+                <pre class="text-sm md:text-base leading-relaxed overflow-x-auto"><code><span class="text-sky-400 font-bold">const int</span> BUZZER    = <span class="text-amber-300 font-bold">15</span>; <span class="text-slate-400">// ขา 15</span>
+<span class="text-sky-400 font-bold">const int</span> LIMIT_PIN = <span class="text-amber-300 font-bold">25</span>; <span class="text-slate-400">// ขา 25</span>
+<span class="text-sky-400 font-bold">const int</span> IR_PIN    = <span class="text-amber-300 font-bold">26</span>; <span class="text-slate-400">// ขา 26</span></code></pre>
+              </div>
+
+              <div class="p-4 rounded-3xl bg-rose-50 border-2 border-rose-400 flex items-center gap-3.5">
+                <span class="text-3xl">⚠️</span>
+                <div>
+                  <div class="text-base font-black text-rose-950">กฎเหล็กภาษา C/C++</div>
+                  <div class="text-xs md:text-sm font-bold text-rose-900">
+                    จบคำสั่งต้องใส่ <b>เซมิโคลอน (<code class="px-1.5 py-0.5 rounded bg-rose-900 text-white">;</code>)</b> ท้ายบรรทัดเสมอ!
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+
+      // SLIDE 4 (Visual Fritzing-style Hardware Wiring Diagram)
+      {
+        topic: "บทที่ 1: รู้จักหุ่นยนต์ & ESP32",
+        title: "🔌 แผนภาพการต่อสายอุปกรณ์หุ่นยนต์ของเรา (Wiring Diagram)",
+        subtitle: "ดูภาพรวมว่า แบตเตอรี่, บอร์ด ESP32, ชิปขับมอเตอร์, ล้อทั้ง 2 ข้าง, เซอร์โว และลำโพง ต่อสายหากันอย่างไร",
+        render: () => `
+          <div class="space-y-3 my-auto">
+            <!-- Interactive Filter Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-100 border-2 border-slate-300 rounded-2xl px-4 py-2">
+              <span class="text-xs md:text-sm font-black text-slate-700">👆 คลิกเพื่อดูสายไฟแต่ละส่วนชัดๆ:</span>
+              <div class="flex flex-wrap gap-1.5 text-xs font-black">
+                <button onclick="highlightSchem('all')" id="sch-btn-all" class="px-3 py-1.5 rounded-xl bg-sky-600 text-white cursor-pointer transition shadow-sm">🔍 ดูครบทุกชิ้น (7 อุปกรณ์)</button>
+                <button onclick="highlightSchem('power')" id="sch-btn-power" class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-200 cursor-pointer transition">🔋 1. แบตเตอรี่ & ไฟเลี้ยง</button>
+                <button onclick="highlightSchem('motor')" id="sch-btn-motor" class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-200 cursor-pointer transition">🛞 2. Driver + มอเตอร์ 2 ล้อ</button>
+                <button onclick="highlightSchem('io')" id="sch-btn-io" class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-200 cursor-pointer transition">🦾 3. เซอร์โว (360° & 180°) + Buzzer</button>
+              </div>
+            </div>
+
+            <!-- Fritzing-Style Visual Wiring Canvas -->
+            <div class="bg-white border-2 border-slate-300 rounded-3xl p-2 md:p-4 shadow-sm">
+              <svg viewBox="0 0 980 435" class="w-full h-[365px] md:h-[400px] select-none">
+
+                <!-- [POWER WIRES: Battery -> ESP32 & Driver & Servos] -->
+                <g id="sch-grp-power" class="transition-opacity duration-300">
+                  <path d="M 730 330 L 660 330 L 660 280 L 472 280 L 472 252" fill="none" stroke="#dc2626" stroke-width="4" stroke-linejoin="round"/>
+                  <path d="M 472 280 L 265 280 L 265 235" fill="none" stroke="#dc2626" stroke-width="4" stroke-linejoin="round"/>
+                  <path d="M 730 350 L 675 350 L 675 295 L 488 295 L 488 252" fill="none" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+                  <path d="M 488 295 L 280 295 L 280 235" fill="none" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+
+                  <!-- 18650 Battery Pack (Bottom Right - Realistic Illustration) -->
+                  <g transform="translate(730, 272)">
+                    <rect x="0" y="16" width="225" height="96" rx="8" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+                    <rect x="14" y="24" width="196" height="36" rx="6" fill="#d97706" stroke="#92400e" stroke-width="1.5"/>
+                    <rect x="65" y="24" width="145" height="36" rx="4" fill="#334155"/>
+                    <text x="135" y="47" text-anchor="middle" fill="#ffffff" font-size="13" font-family="sans-serif" font-weight="900">18650 Battery</text>
+                    <rect x="14" y="68" width="196" height="36" rx="6" fill="#d97706" stroke="#92400e" stroke-width="1.5"/>
+                    <rect x="14" y="68" width="145" height="36" rx="4" fill="#334155"/>
+                    <text x="90" y="91" text-anchor="middle" fill="#ffffff" font-size="13" font-family="sans-serif" font-weight="900">18650 Battery</text>
+                    <path d="M 6 32 L 14 36 L 6 42 L 14 46 L 6 52" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+                    <path d="M 218 76 L 210 80 L 218 86 L 210 90 L 218 96" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+
+                    <rect x="30" y="-22" width="165" height="30" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="30" y="4" width="165" height="5" fill="#f59e0b"/>
+                    <text x="112" y="-3" text-anchor="middle" fill="#78350f" font-size="12" font-weight="900">🔋 Battery (รางถ่านไฟเลี้ยง)</text>
+                  </g>
+                </g>
+
+                <!-- [MOTOR SYSTEM: ESP32 -> Driver TB6612FNG -> 2 Motors] -->
+                <g id="sch-grp-motor" class="transition-opacity duration-300">
+                  <line x1="418" y1="142" x2="310" y2="142" stroke="#10b981" stroke-width="3"/>
+                  <line x1="418" y1="154" x2="310" y2="154" stroke="#34d399" stroke-width="3"/>
+                  <line x1="418" y1="166" x2="310" y2="166" stroke="#059669" stroke-width="3"/>
+                  <line x1="418" y1="186" x2="310" y2="186" stroke="#0284c7" stroke-width="3"/>
+                  <line x1="418" y1="198" x2="310" y2="198" stroke="#38bdf8" stroke-width="3"/>
+                  <line x1="418" y1="210" x2="310" y2="210" stroke="#0369a1" stroke-width="3"/>
+
+                  <path d="M 195 152 L 135 152 L 135 128 L 76 128 L 76 108" fill="none" stroke="#dc2626" stroke-width="3.5" stroke-linejoin="round"/>
+                  <path d="M 195 166 L 122 166 L 122 140 L 54 140 L 54 108" fill="none" stroke="#1e293b" stroke-width="3.5" stroke-linejoin="round"/>
+
+                  <path d="M 195 194 L 135 194 L 135 268 L 76 268 L 76 298" fill="none" stroke="#dc2626" stroke-width="3.5" stroke-linejoin="round"/>
+                  <path d="M 195 208 L 122 208 L 122 280 L 54 280 L 54 298" fill="none" stroke="#1e293b" stroke-width="3.5" stroke-linejoin="round"/>
+
+                  <!-- DRIVER BOARD: TB6612FNG (Center-Left) -->
+                  <g transform="translate(195, 118)">
+                    <rect x="0" y="0" width="115" height="118" rx="8" fill="#991b1b" stroke="#7f1d1d" stroke-width="2.5"/>
+                    <g fill="#facc15">
+                      <circle cx="10" cy="22" r="3.5"/><circle cx="10" cy="36" r="3.5"/><circle cx="10" cy="50" r="3.5"/><circle cx="10" cy="64" r="3.5"/><circle cx="10" cy="78" r="3.5"/><circle cx="10" cy="92" r="3.5"/>
+                      <circle cx="105" cy="22" r="3.5"/><circle cx="105" cy="36" r="3.5"/><circle cx="105" cy="50" r="3.5"/><circle cx="105" cy="64" r="3.5"/><circle cx="105" cy="78" r="3.5"/><circle cx="105" cy="92" r="3.5"/>
+                    </g>
+                    <rect x="32" y="28" width="50" height="58" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+                    <line x1="25" y1="36" x2="32" y2="36" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="25" y1="48" x2="32" y2="48" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="25" y1="60" x2="32" y2="60" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="25" y1="72" x2="32" y2="72" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="82" y1="36" x2="89" y2="36" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="82" y1="48" x2="89" y2="48" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="82" y1="60" x2="89" y2="60" stroke="#cbd5e1" stroke-width="2"/>
+                    <line x1="82" y1="72" x2="89" y2="72" stroke="#cbd5e1" stroke-width="2"/>
+                    <text x="57" y="54" text-anchor="middle" fill="#f8fafc" font-size="8.5" font-family="monospace" font-weight="bold">TB6612</text>
+                    <text x="57" y="66" text-anchor="middle" fill="#fca5a5" font-size="7.5" font-family="monospace">DRIVER</text>
+
+                    <rect x="-12" y="-38" width="140" height="30" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="-12" y="-12" width="140" height="5" fill="#f59e0b"/>
+                    <text x="58" y="-19" text-anchor="middle" fill="#78350f" font-size="11.5" font-weight="900">⚡ Motor Driver (บอร์ดขับล้อ)</text>
+                  </g>
+
+                  <!-- MOTOR 1: Left Wheel DC Motor (Top Left) -->
+                  <g transform="translate(25, 14)">
+                    <rect x="37" y="0" width="6" height="14" rx="1" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+                    <rect x="12" y="14" width="56" height="68" rx="6" fill="#475569" stroke="#1e293b" stroke-width="2.5"/>
+                    <rect x="12" y="20" width="56" height="8" fill="#1e293b"/>
+                    <rect x="26" y="38" width="10" height="5" rx="1" fill="#0f172a"/>
+                    <rect x="44" y="38" width="10" height="5" rx="1" fill="#0f172a"/>
+                    <path d="M 12 76 L 68 76 L 64 90 L 16 90 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+                    <rect x="25" y="90" width="6" height="6" fill="#eab308"/>
+                    <rect x="49" y="90" width="6" height="6" fill="#eab308"/>
+
+                    <rect x="78" y="26" width="138" height="32" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="78" y="53" width="138" height="5" fill="#f59e0b"/>
+                    <text x="147" y="46" text-anchor="middle" fill="#78350f" font-size="11.5" font-weight="900">🛞 Left Motor (ล้อซ้าย)</text>
+                  </g>
+
+                  <!-- MOTOR 2: Right Wheel DC Motor (Bottom Left) -->
+                  <g transform="translate(25, 298)">
+                    <rect x="25" y="0" width="6" height="6" fill="#eab308"/>
+                    <rect x="49" y="0" width="6" height="6" fill="#eab308"/>
+                    <path d="M 16 6 L 64 6 L 68 20 L 12 20 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+                    <rect x="12" y="20" width="56" height="68" rx="6" fill="#475569" stroke="#1e293b" stroke-width="2.5"/>
+                    <rect x="12" y="68" width="56" height="8" fill="#1e293b"/>
+                    <rect x="26" y="48" width="10" height="5" rx="1" fill="#0f172a"/>
+                    <rect x="44" y="48" width="10" height="5" rx="1" fill="#0f172a"/>
+                    <rect x="37" y="88" width="6" height="14" rx="1" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+
+                    <rect x="78" y="34" width="142" height="32" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="78" y="61" width="142" height="5" fill="#f59e0b"/>
+                    <text x="149" y="54" text-anchor="middle" fill="#78350f" font-size="11.5" font-weight="900">🛞 Right Motor (ล้อขวา)</text>
+                  </g>
+                </g>
+
+                <!-- [SERVOS (360° & 180°) + BUZZER] -->
+                <g id="sch-grp-io" class="transition-opacity duration-300">
+                  <path d="M 695 58 L 595 58 L 595 142 L 538 142" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linejoin="round"/>
+                  <path d="M 695 66 L 605 66 L 605 150 L 538 150" fill="none" stroke="#dc2626" stroke-width="3" stroke-linejoin="round"/>
+                  <path d="M 695 74 L 615 74 L 615 158 L 538 158" fill="none" stroke="#475569" stroke-width="3" stroke-linejoin="round"/>
+
+                  <path d="M 695 178 L 538 178" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linejoin="round"/>
+                  <path d="M 695 186 L 538 186" fill="none" stroke="#dc2626" stroke-width="3" stroke-linejoin="round"/>
+                  <path d="M 695 194 L 538 194" fill="none" stroke="#475569" stroke-width="3" stroke-linejoin="round"/>
+
+                  <path d="M 552 345 L 552 222 L 538 222" fill="none" stroke="#9333ea" stroke-width="3.5" stroke-linejoin="round"/>
+                  <path d="M 568 345 L 568 295" fill="none" stroke="#1e293b" stroke-width="3.5" stroke-linejoin="round"/>
+
+                  <!-- COMPONENT: 360-Degree Continuous Servo (Top Right) -->
+                  <g transform="translate(695, 22)">
+                    <rect x="0" y="28" width="26" height="24" rx="2" fill="#1e293b"/>
+                    <rect x="52" y="12" width="96" height="52" rx="5" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    <rect x="42" y="28" width="116" height="8" rx="2" fill="#334155"/>
+                    <text x="115" y="42" text-anchor="middle" fill="#38bdf8" font-size="10" font-family="monospace" font-weight="900">360° SERVO</text>
+                    <circle cx="76" cy="38" r="22" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                    <circle cx="76" cy="38" r="5" fill="#dc2626"/>
+                    <circle cx="76" cy="22" r="2.5" fill="#475569"/>
+                    <circle cx="76" cy="54" r="2.5" fill="#475569"/>
+                    <circle cx="60" cy="38" r="2.5" fill="#475569"/>
+                    <circle cx="92" cy="38" r="2.5" fill="#475569"/>
+                    <path d="M 162 24 A 16 16 0 1 1 162 52" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+                    <polygon points="162,52 155,46 165,43" fill="#0284c7"/>
+
+                    <rect x="44" y="-18" width="215" height="28" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="44" y="6" width="215" height="4" fill="#f59e0b"/>
+                    <text x="151" y="0" text-anchor="middle" fill="#78350f" font-size="11" font-weight="900">🔄 360° Servo (S1 ยกแขน - ขา GP22)</text>
+                  </g>
+
+                  <!-- COMPONENT: 180-Degree Standard Servo (Middle Right) -->
+                  <g transform="translate(695, 144)">
+                    <rect x="0" y="28" width="26" height="24" rx="2" fill="#1e293b"/>
+                    <rect x="52" y="14" width="92" height="48" rx="5" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2"/>
+                    <rect x="42" y="30" width="112" height="7" rx="2" fill="#2563eb"/>
+                    <text x="115" y="42" text-anchor="middle" fill="#ffffff" font-size="9.5" font-family="monospace" font-weight="900">180° SG90</text>
+                    <g transform="translate(74, 38) rotate(-25)">
+                      <rect x="-32" y="-6" width="64" height="12" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+                      <rect x="-6" y="-22" width="12" height="44" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+                      <circle cx="0" cy="0" r="4" fill="#334155"/>
+                      <circle cx="-22" cy="0" r="2" fill="#64748b"/>
+                      <circle cx="22" cy="0" r="2" fill="#64748b"/>
+                    </g>
+
+                    <rect x="44" y="-18" width="215" height="28" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="44" y="6" width="215" height="4" fill="#f59e0b"/>
+                    <text x="151" y="0" text-anchor="middle" fill="#78350f" font-size="11" font-weight="900">🦀 180° Servo (มือคีบปุ่ม O - ขา GP23)</text>
+                  </g>
+
+                  <!-- COMPONENT: Active Buzzer (Bottom Center-Right) -->
+                  <g transform="translate(520, 342)">
+                    <circle cx="40" cy="34" r="26" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+                    <circle cx="40" cy="34" r="8" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/>
+                    <text x="54" y="22" fill="#ef4444" font-size="12" font-weight="900">+</text>
+                    <rect x="-35" y="64" width="155" height="28" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                    <rect x="-35" y="88" width="155" height="4" fill="#f59e0b"/>
+                    <text x="42" y="82" text-anchor="middle" fill="#78350f" font-size="11" font-weight="900">🔔 Buzzer (ลำโพง GP15)</text>
+                  </g>
+                </g>
+
+                <!-- CENTER: ESP32 BOARD (Realistic Visual Component) -->
+                <g transform="translate(418, 72)">
+                  <rect x="0" y="0" width="120" height="182" rx="8" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+                  <rect x="24" y="6" width="72" height="20" rx="2" fill="#020617" stroke="#475569" stroke-width="1"/>
+                  <path d="M 30 22 L 30 10 L 40 10 L 40 20 L 50 20 L 50 10 L 60 10 L 60 20 L 70 20 L 70 10 L 88 10" fill="none" stroke="#eab308" stroke-width="2"/>
+                  <rect x="20" y="30" width="80" height="68" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                  <text x="60" y="62" text-anchor="middle" fill="#0f172a" font-size="13" font-family="monospace" font-weight="900">ESP32</text>
+                  <text x="60" y="78" text-anchor="middle" fill="#0284c7" font-size="9" font-family="monospace" font-weight="900">Wi-Fi + BT</text>
+                  <g fill="#f59e0b">
+                    <circle cx="8" cy="40" r="3.5"/><circle cx="8" cy="54" r="3.5"/><circle cx="8" cy="70" r="3.5"/><circle cx="8" cy="82" r="3.5"/><circle cx="8" cy="94" r="3.5"/><circle cx="8" cy="114" r="3.5"/><circle cx="8" cy="126" r="3.5"/><circle cx="8" cy="138" r="3.5"/><circle cx="8" cy="154" r="3.5"/>
+                    <circle cx="112" cy="40" r="3.5"/><circle cx="112" cy="54" r="3.5"/><circle cx="112" cy="70" r="3.5"/><circle cx="112" cy="78" r="3.5"/><circle cx="112" cy="86" r="3.5"/><circle cx="112" cy="106" r="3.5"/><circle cx="112" cy="114" r="3.5"/><circle cx="112" cy="122" r="3.5"/><circle cx="112" cy="150" r="3.5"/>
+                  </g>
+                  <rect x="42" y="168" width="36" height="18" rx="3" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+
+                  <rect x="-18" y="-44" width="156" height="32" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                  <rect x="-18" y="-16" width="156" height="5" fill="#f59e0b"/>
+                  <text x="60" y="-24" text-anchor="middle" fill="#78350f" font-size="12" font-weight="900">🧠 บอร์ดสมองกล ESP32</text>
+                </g>
+
+              </svg>
+            </div>
+          </div>
+        `
+      },
+
+      // SLIDE 4
+      {
+        topic: "บทที่ 2: พื้นฐานโค้ด 4 ท่าไม้ตาย",
+        title: "📦 ท่าที่ 1: ตัวแปร (Variables) = กล่องเก็บค่า",
+        subtitle: "ตั้งชื่อกล่องเพื่อเก็บตัวเลขหรือสถานะให้หุ่นยนต์จำได้",
+        render: () => `
+          <div class="grid md:grid-cols-2 gap-5 my-auto">
+            <!-- int -->
+            <div class="p-5 rounded-3xl bg-sky-50 border-2 border-sky-400 flex flex-col justify-between space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-4 py-1 rounded-xl bg-sky-600 text-white font-mono text-xl font-black">int</span>
+                <span class="text-base font-black text-sky-900">เก็บ "จำนวนเต็ม"</span>
+              </div>
+              <div class="text-sm font-bold text-slate-700">เช่น เลขขาพิน, ความเร็วล้อ (-255 ถึง 255), มุมเซอร์โว (0–180°)</div>
+              <pre class="p-3.5 rounded-2xl bg-slate-900 text-slate-100 text-sm md:text-base font-bold"><code><span class="text-sky-400">int</span> O_OPEN = <span class="text-amber-300">90</span>;  <span class="text-slate-400">// มุมกางมือคีบ 90°</span></code></pre>
+            </div>
+
+            <!-- bool -->
+            <div class="p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-400 flex flex-col justify-between space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-4 py-1 rounded-xl bg-emerald-600 text-white font-mono text-xl font-black">bool</span>
+                <span class="text-base font-black text-emerald-900">เก็บ "จริง (true) / เท็จ (false)"</span>
+              </div>
+              <div class="text-sm font-bold text-slate-700">ใช้เช็กสถานะ 2 ทางเลือก เช่น ตั้งศูนย์หรือยัง? มือคีบอ้าอยู่ไหม?</div>
+              <pre class="p-3.5 rounded-2xl bg-slate-900 text-slate-100 text-sm md:text-base font-bold"><code><span class="text-emerald-400">bool</span> oOn = <span class="text-amber-300">false</span>; <span class="text-slate-400">// มือคีบหุบอยู่</span></code></pre>
+            </div>
+
+            <!-- float -->
+            <div class="p-5 rounded-3xl bg-indigo-50 border-2 border-indigo-400 flex flex-col justify-between space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-4 py-1 rounded-xl bg-indigo-600 text-white font-mono text-xl font-black">float</span>
+                <span class="text-base font-black text-indigo-900">เก็บ "เลขทศนิยม"</span>
+              </div>
+              <div class="text-sm font-bold text-slate-700">ใช้คำนวณค่าที่ต้องการความละเอียดสูง</div>
+              <pre class="p-3.5 rounded-2xl bg-slate-900 text-slate-100 text-sm md:text-base font-bold"><code><span class="text-indigo-400">float</span> DEG_PER_SEC = <span class="text-amber-300">60.0</span>;</code></pre>
+            </div>
+
+            <!-- Array -->
+            <div class="p-5 rounded-3xl bg-amber-50 border-2 border-amber-400 flex flex-col justify-between space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-4 py-1 rounded-xl bg-amber-500 text-white font-mono text-xl font-black">Array [ ]</span>
+                <span class="text-base font-black text-amber-950">ตู้ล็อกเกอร์เรียงต่อกัน</span>
+              </div>
+              <div class="text-sm font-bold text-slate-700">เก็บเลขขาเซอร์โว 7 ตัวในชื่อเดียว (ช่องแรกคือช่องที่ 0)</div>
+              <pre class="p-3.5 rounded-2xl bg-slate-900 text-slate-100 text-xs md:text-sm font-bold"><code><span class="text-amber-400">const int</span> SERVO_PINS[7] = {22, 27, 25, 12, 13, 14, 23};</code></pre>
+            </div>
+          </div>
+        `
+      },
+
+      // SLIDE 5
+      {
+        topic: "บทที่ 2: พื้นฐานโค้ด 4 ท่าไม้ตาย",
+        title: "🔀 ท่าที่ 2: เงื่อนไข (If / Else) = การตัดสินใจ",
+        subtitle: "ถ้าเงื่อนไขเป็นจริง (true) ทำปีกกาแรก ➔ ถ้าไม่ใช่ (false) ทำปีกกา else",
+        render: () => `
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <!-- Left Visual Flowchart -->
+            <div class="md:col-span-5 p-5 rounded-3xl bg-slate-100 border-2 border-slate-300 flex flex-col items-center text-center space-y-3">
+              <div class="px-4 py-2 rounded-2xl bg-sky-600 text-white font-black text-base shadow-sm">
+                ❓ สวิตช์โดนกดใช่ไหม?<br><code class="text-xs font-normal">if (limitPressed())</code>
+              </div>
+              <div class="grid grid-cols-2 gap-4 w-full pt-1">
+                <div class="p-3.5 rounded-2xl bg-rose-100 border-2 border-rose-400 space-y-1">
+                  <div class="text-xs font-black text-rose-700">✅ จริง (true)</div>
+                  <div class="text-2xl">🔊 🛑</div>
+                  <div class="text-sm font-black text-rose-950">ร้องปี๊บ & หยุด!</div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-emerald-100 border-2 border-emerald-400 space-y-1">
+                  <div class="text-xs font-black text-emerald-700">❌ เท็จ (false)</div>
+                  <div class="text-2xl">⚙️ ⬇️</div>
+                  <div class="text-sm font-black text-emerald-950">หมุนแขนลงต่อ</div>
+                </div>
+              </div>
+              <div class="w-full p-3 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 flex justify-around font-mono">
+                <span><b>==</b> เท่ากับ</span>
+                <span><b>!=</b> ไม่เท่ากับ</span>
+                <span><b>&gt;</b> มากกว่า</span>
+                <span><b>&lt;</b> น้อยกว่า</span>
+              </div>
+            </div>
+
+            <!-- Right Interactive Tester -->
+            <div class="md:col-span-7 p-6 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-base font-black text-sky-950">🎮 กดปุ่มจำลองเหตุการณ์จริง:</span>
+                <span id="if-sim-badge" class="px-3 py-1 rounded-xl text-sm font-mono font-black bg-white border-2 border-sky-400 text-sky-800">limitPressed() = false</span>
+              </div>
+
+              <div class="flex gap-3">
+                <button onclick="setIfSim(false)" id="btn-if-false" class="flex-1 py-3 px-4 rounded-2xl text-sm md:text-base font-black bg-emerald-600 text-white shadow-md transition cursor-pointer">
+                  🟢 ยังไม่ชนสวิตช์ (false)
                 </button>
-                <button onclick="setIfSim(true)" id="btn-if-true" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)] transition">
+                <button onclick="setIfSim(true)" id="btn-if-true" class="flex-1 py-3 px-4 rounded-2xl text-sm md:text-base font-black bg-slate-200 text-slate-700 transition cursor-pointer">
                   🔴 แขนกลชนสวิตช์! (true)
                 </button>
               </div>
-              <div class="p-3.5 rounded-xl bg-[var(--card)] border border-[var(--border)] font-mono text-xs space-y-1.5">
-                <div>if (limitPressed()) {</div>
-                <div id="if-branch-true" class="pl-4 py-1 rounded opacity-40 transition">
-                  🔊 hitBeep(); homeStop(); <span class="text-[var(--muted-foreground)]">// ร้องปี๊บ & หยุด!</span>
+
+              <div class="p-4 rounded-2xl bg-slate-900 text-slate-100 font-mono text-sm md:text-base space-y-2 border-2 border-slate-700">
+                <div class="text-sky-400 font-bold">if (limitPressed()) {</div>
+                <div id="if-branch-true" class="pl-5 py-2 rounded-xl opacity-30 transition">
+                  🔊 hitBeep(); homeStop(); <span class="text-amber-300">// ร้องปี๊บ & หยุดทันที!</span>
                 </div>
-                <div>} else {</div>
-                <div id="if-branch-false" class="pl-4 py-1 rounded bg-[var(--secondary)] font-bold transition">
-                  ⚙️ homeRun(); <span class="text-[var(--muted-foreground)]">// หมุนแขนกลลงต่อไป...</span>
+                <div class="text-sky-400 font-bold">} else {</div>
+                <div id="if-branch-false" class="pl-5 py-2 rounded-xl bg-emerald-600 text-white font-black transition">
+                  ⚙️ homeRun(); <span class="text-emerald-100">// หมุนแขนกลลงต่อไป...</span>
                 </div>
-                <div>}</div>
+                <div class="text-sky-400 font-bold">}</div>
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 6
       {
         topic: "บทที่ 2: พื้นฐานโค้ด 4 ท่าไม้ตาย",
-        title: "🔁 ท่าไม้ตายที่ 3: การวนซ้ำ (while & for Loop)",
-        subtitle: "สั่งให้หุ่นยนต์ทำเรื่องเดิมซ้ำๆ โดยที่เราไม่ต้องก๊อปปี้โค้ดเป็นร้อยบรรทัด",
+        title: "🔁 ท่าที่ 3: การวนซ้ำ (while & for Loop)",
+        subtitle: "สั่งให้หุ่นยนต์ทำซ้ำอัตโนมัติ ไม่ต้องเขียนโค้ดซ้ำหลายบรรทัด",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-5 my-auto">
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
+          <div class="grid md:grid-cols-2 gap-6 my-auto">
+            <!-- WHILE LOOP -->
+            <div class="p-6 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-3 shadow-sm">
               <div class="flex items-center justify-between">
-                <span class="px-2.5 py-1 rounded text-xs font-bold font-mono bg-[var(--primary)] text-[var(--primary-foreground)]">while (เงื่อนไข)</span>
-                <span class="text-xs text-[var(--muted-foreground)]">วนซ้ำตราบใดที่เงื่อนไขยังเป็นจริง</span>
+                <span class="px-3.5 py-1.5 rounded-xl text-base font-black font-mono bg-sky-600 text-white">while (เงื่อนไข)</span>
+                <span class="text-sm font-black text-sky-900">วนไปเรื่อยๆ จนกว่าจะสำเร็จ</span>
               </div>
-              <p class="text-xs leading-relaxed">
-                ใช้ตอนหุ่นยนต์ <b>หาจุดเริ่มต้น (Homing)</b> ตอนเปิดเครื่อง (บรรทัดที่ 163 ใน <code>main.cpp</code>):
-              </p>
-              <pre class="p-3.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>homeRun(+1, HOME_SPEED_US); // เริ่มหมุนแขนลง
+              <div class="p-3 rounded-2xl bg-white border-2 border-sky-200 text-sm font-bold text-slate-800">
+                🏠 <b>ตัวอย่างจริง:</b> หมุนแขนกลลงไปเรื่อยๆ <b>"ตราบใดที่ยังไม่ชนสวิตช์"</b> (เครื่องหมาย <code>!</code> แปลว่า <b>ไม่</b>)
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 text-slate-100 text-sm md:text-base leading-relaxed overflow-x-auto"><code>homeRun(+1, HOME_SPEED_US); <span class="text-slate-400">// เริ่มหมุนลง</span>
 
-// เครื่องหมาย ! แปลว่า "ไม่ (NOT)"
-// ตราบใดที่ "ยังไม่ชนสวิตช์" ให้รอและหมุนต่อไปเรื่อยๆ
-while (!limitStable()) {
-    delay(2);
+<span class="text-sky-400 font-bold">while (!limitStable())</span> {
+    delay(2); <span class="text-amber-300">// ยังไม่ชน ➔ รอและหมุนต่อ</span>
 }
 
-homeStop(); // พอชนสวิตช์ปุ๊บ หลุดจากลูปมาสั่งหยุด!</code></pre>
+homeStop(); <span class="text-emerald-400">// ชนแล้ว! หลุดลูปมาสั่งหยุด</span></code></pre>
             </div>
 
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
+            <!-- FOR LOOP -->
+            <div class="p-6 rounded-3xl bg-indigo-50 border-2 border-indigo-400 space-y-3 shadow-sm">
               <div class="flex items-center justify-between">
-                <span class="px-2.5 py-1 rounded text-xs font-bold font-mono bg-[var(--secondary)] text-[var(--foreground)]">for (เริ่มต้น; เงื่อนไข; นับเพิ่ม)</span>
-                <span class="text-xs text-[var(--muted-foreground)]">วนซ้ำตามจำนวนรอบที่กำหนด</span>
+                <span class="px-3.5 py-1.5 rounded-xl text-base font-black font-mono bg-indigo-600 text-white">for (นับรอบ)</span>
+                <span class="text-sm font-black text-indigo-900">วนซ้ำตามจำนวนรอบที่กำหนด</span>
               </div>
-              <p class="text-xs leading-relaxed">
-                ใช้ตอน <b>ออกตัวเซอร์โวแบบนุ่มนวล 4 จังหวะ (Soft-start)</b> เพื่อไม่ให้ไฟกระชาก (บรรทัดที่ 140 ใน <code>main.cpp</code>):
-              </p>
-              <pre class="p-3.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>// นับรอบ step ตั้งแต่ 1 ถึง 4 (รวม 4 รอบ)
-// รอบที่ 1 ความเร็ว 25% -> รอบที่ 4 ความเร็ว 100%
-for (int step = 1; step <= 4; step++) {
+              <div class="p-3 rounded-2xl bg-white border-2 border-indigo-200 text-sm font-bold text-slate-800">
+                🚀 <b>ตัวอย่างจริง:</b> ค่อยๆ เร่งความเร็วเซอร์โว <b>4 จังหวะ (25% ➔ 50% ➔ 75% ➔ 100%)</b> เพื่อกันไฟกระชาก
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 text-slate-100 text-sm md:text-base leading-relaxed overflow-x-auto"><code><span class="text-indigo-400 font-bold">for (int step = 1; step &lt;= 4; step++)</span> {
     int s = (speedUs * step) / 4;
-    servos[HOME_SERVO].writeMicroseconds(STOP_US + dir * s);
+    servos[0].writeMicroseconds(1500 + s);
     delay(25);
 }</code></pre>
             </div>
           </div>
         `
       },
+
+      // SLIDE 7
       {
         topic: "บทที่ 2: พื้นฐานโค้ด 4 ท่าไม้ตาย",
-        title: "⚡ ท่าไม้ตายที่ 4: ฟังก์ชัน (Functions)",
-        subtitle: "การมัดรวมคำสั่งหลายๆ บรรทัดไว้ในชื่อเดียว เพื่อเรียกใช้เป็น 'ท่าไม้ตายสำเร็จรูป'",
+        title: "⚡ ท่าที่ 4: ฟังก์ชัน (Functions) = ท่าไม้ตายสำเร็จรูป",
+        subtitle: "เขียนชุดคำสั่งเก็บไว้ในชื่อเดียว เวลาใช้แค่เรียกชื่อสั้นๆ!",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-6 items-center my-auto">
-            <div class="space-y-3">
-              <h3 class="text-lg font-bold">1. ตอนสร้างท่าไม้ตาย (เขียนไว้ครั้งเดียว)</h3>
-              <pre class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>// สร้างฟังก์ชันชื่อ beep รับค่าเวลา ms เข้ามาในวงเล็บ
-void beep(int ms) {
-    digitalWrite(BUZZER, HIGH); // เปิดเสียง
-    delay(ms);                  // รอตามเวลาที่สั่ง
-    digitalWrite(BUZZER, LOW);  // ปิดเสียง
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <!-- Left: How Function Works -->
+            <div class="md:col-span-6 space-y-4">
+              <div class="p-5 rounded-3xl bg-slate-900 text-slate-100 border-2 border-slate-700 space-y-2 shadow-md">
+                <div class="text-xs font-bold text-amber-400">1. สร้างท่าไม้ตายไว้ 1 ครั้ง:</div>
+                <pre class="text-sm md:text-base leading-relaxed"><code><span class="text-sky-400 font-bold">void beep(int ms)</span> {
+    digitalWrite(BUZZER, HIGH); <span class="text-emerald-400">// เปิดไฟ</span>
+    delay(ms);                  <span class="text-amber-300">// รอเวลา</span>
+    digitalWrite(BUZZER, LOW);  <span class="text-rose-400">// ปิดไฟ</span>
 }</code></pre>
-              <h3 class="text-lg font-bold pt-1">2. ตอนเรียกใช้งานจริง (สั้นนิดเดียว!)</h3>
-              <pre class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>beep(80);  // ร้องปี๊บสั้นๆ 0.08 วินาที
-beep(600); // ร้องปี๊บยาวๆ 0.6 วินาที</code></pre>
+              </div>
+
+              <div class="p-5 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-2">
+                <div class="text-sm font-black text-sky-900">2. เรียกใช้เมื่อไหร่ก็ได้ แค่บรรทัดเดียว!</div>
+                <pre class="p-3.5 rounded-2xl bg-slate-900 text-slate-100 text-sm md:text-base"><code><span class="text-amber-300 font-bold">beep(80);</span>  <span class="text-slate-400">// ร้องปี๊บสั้นๆ</span>
+<span class="text-amber-300 font-bold">beep(600);</span> <span class="text-slate-400">// ร้องปี๊บยาวๆ</span></code></pre>
+              </div>
             </div>
 
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">สารบัญฟังก์ชันสำคัญในหุ่นยนต์ของเรา (main.cpp)</div>
-              <div class="space-y-2 text-xs">
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex justify-between items-center">
-                  <code class="font-bold text-[var(--primary)]">beep(ms)</code>
-                  <span>สั่งลำโพงร้องปี๊บตามเวลา <code>ms</code> มิลลิวินาที</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex justify-between items-center">
-                  <code class="font-bold text-[var(--primary)]">drive(left, right)</code>
-                  <span>สั่งล้อซ้ายและล้อขวาหมุนด้วยความเร็ว <code>-255..255</code></span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex justify-between items-center">
-                  <code class="font-bold text-[var(--primary)]">setServo(n, angle)</code>
-                  <span>สั่งเซอร์โวตัวที่ <code>n</code> หมุนไปที่มุม <code>0..180</code> องศา</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex justify-between items-center">
-                  <code class="font-bold text-[var(--primary)]">homeServo()</code>
-                  <span>สั่งแขนกลเลื่อนลงมาชนสวิตช์เพื่อตั้งจุดศูนย์ (0°)</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex justify-between items-center">
-                  <code class="font-bold text-[var(--primary)]">limitPressed()</code>
-                  <span>เช็กว่าสวิตช์โดนกดหรือยัง (คืนค่า <code>true/false</code>)</span>
-                </div>
+            <!-- Right: Big Visual Function Cards in main.cpp -->
+            <div class="md:col-span-6 grid grid-cols-1 gap-2.5">
+              <div class="text-base font-black text-slate-800 mb-1">🎯 5 ฟังก์ชันหลักในหุ่นยนต์ของเรา:</div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center justify-between shadow-sm">
+                <code class="text-base font-black text-sky-700">🔊 beep(ms)</code>
+                <span class="text-sm font-bold text-slate-700">สั่งลำโพงร้องปี๊บนาน <code>ms</code> มิลลิวินาที</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center justify-between shadow-sm">
+                <code class="text-base font-black text-emerald-700">🛞 drive(L, R)</code>
+                <span class="text-sm font-bold text-slate-700">สั่งล้อซ้ายและขวาหมุน (<code>-255</code> ถึง <code>255</code>)</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center justify-between shadow-sm">
+                <code class="text-base font-black text-indigo-700">🦾 setServo(n, a)</code>
+                <span class="text-sm font-bold text-slate-700">หมุนเซอร์โวตัวที่ <code>n</code> ไปที่มุม <code>0–180°</code></span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center justify-between shadow-sm">
+                <code class="text-base font-black text-amber-700">🏠 homeServo()</code>
+                <span class="text-sm font-bold text-slate-700">เลื่อนแขนลงมาชนสวิตช์เพื่อตั้งจุดศูนย์</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center justify-between shadow-sm">
+                <code class="text-base font-black text-rose-700">🔘 limitPressed()</code>
+                <span class="text-sm font-bold text-slate-700">เช็กว่าสวิตช์โดนชนหรือยัง (<code>true/false</code>)</span>
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 8
       {
         topic: "บทที่ 3: สัญญาณไฟฟ้า Digital, Analog & PWM",
-        title: "💡 สัญญาณไฟฟ้าในหุ่นยนต์: Digital vs Analog",
-        subtitle: "ทำไมบางอย่างมีแค่ 'เปิดกับปิด' แต่บางอย่าง 'ค่อยๆ เร่งความเร็ว' ได้?",
+        title: "💡 สัญญาณไฟฟ้า: Digital vs Analog",
+        subtitle: "สวิตช์เปิด-ปิด (Digital) ต่างจากคันเร่งปรับความเร็ว (Analog) อย่างไร?",
         render: () => `
           <div class="grid md:grid-cols-2 gap-6 my-auto">
-            <div class="p-5 rounded-2xl bg-[var(--background)] border-2 border-[var(--border)] space-y-3">
+            <!-- DIGITAL CARD -->
+            <div class="p-5 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-3 shadow-sm">
               <div class="flex items-center justify-between">
-                <span class="px-3 py-1 rounded-full text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">1. สัญญาณ DIGITAL (ดิจิทัล)</span>
-                <span class="text-xl">🔘 💡</span>
+                <span class="px-3.5 py-1 rounded-xl text-sm font-black bg-sky-600 text-white">1. DIGITAL (ดิจิทัล)</span>
+                <span class="text-base font-black text-sky-900">🔘 เหมือน "สวิตช์ไฟบ้าน"</span>
               </div>
-              <h3 class="text-lg font-extrabold">เปรียบเหมือน "สวิตช์ไฟบ้าน (กดเปิด / กดปิด)"</h3>
-              <p class="text-xs text-[var(--muted-foreground)]">
-                กระโดดข้ามไปมาระหว่าง <b>2 ค่าเท่านั้น</b> คือ <b>เปิดสุด (3.3V / HIGH)</b> กับ <b>ปิดสนิท (0V / LOW)</b> ไม่มีค่าครึ่งๆ กลางๆ
+              <p class="text-sm font-bold text-slate-700">
+                มีแค่ <b>2 ค่าเท่านั้น</b> คือ <b>เปิดสุด (3.3V / HIGH)</b> กับ <b>ปิดสนิท (0V / LOW)</b>
               </p>
 
-              <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)]">
-                <div class="text-[11px] font-bold text-[var(--muted-foreground)] mb-1 flex justify-between">
-                  <span>กราฟแรงดันไฟ Digital (กระโดดขึ้น-ลงทันที)</span>
-                  <span class="font-mono text-[var(--primary)]">มีแค่ 0 กับ 1</span>
-                </div>
-                <svg viewBox="0 0 380 115" class="w-full h-28 overflow-visible">
-                  <line x1="78" y1="22" x2="365" y2="22" stroke="currentColor" stroke-opacity="0.18" stroke-dasharray="4 4" />
-                  <line x1="78" y1="58" x2="365" y2="58" stroke="currentColor" stroke-opacity="0.1" stroke-dasharray="2 4" />
-                  <line x1="78" y1="94" x2="365" y2="94" stroke="currentColor" stroke-opacity="0.25" />
-                  <text x="4" y="26" fill="currentColor" class="text-[10px] font-mono font-bold">3.3V (HIGH)</text>
-                  <text x="4" y="62" fill="currentColor" fill-opacity="0.4" class="text-[9px] font-mono">1.6V (ไม่มี)</text>
-                  <text x="4" y="98" fill="currentColor" class="text-[10px] font-mono font-bold">0.0V (LOW)</text>
-                  <path d="M 78 94 L 125 94 L 125 22 L 195 22 L 195 94 L 250 94 L 250 22 L 320 22 L 320 94 L 365 94"
-                        fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linejoin="round" />
-                  <text x="101" y="86" text-anchor="middle" fill="currentColor" fill-opacity="0.7" class="text-[9px] font-mono">ปิด (0)</text>
-                  <text x="160" y="15" text-anchor="middle" fill="var(--primary)" class="text-[10px] font-mono font-bold">เปิด (1)</text>
-                  <text x="222" y="86" text-anchor="middle" fill="currentColor" fill-opacity="0.7" class="text-[9px] font-mono">ปิด (0)</text>
-                  <text x="285" y="15" text-anchor="middle" fill="var(--primary)" class="text-[10px] font-mono font-bold">เปิด (1)</text>
+              <!-- High-Contrast SVG Digital Graph -->
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-sky-300">
+                <svg viewBox="0 0 380 115" class="w-full h-32 overflow-visible">
+                  <line x1="82" y1="22" x2="365" y2="22" stroke="#94a3b8" stroke-dasharray="4 4" stroke-width="1.5" />
+                  <line x1="82" y1="58" x2="365" y2="58" stroke="#cbd5e1" stroke-dasharray="2 4" stroke-width="1.5" />
+                  <line x1="82" y1="94" x2="365" y2="94" stroke="#64748b" stroke-width="2" />
+                  <text x="4" y="26" fill="#0369a1" class="text-[11px] font-mono font-black">3.3V (HIGH)</text>
+                  <text x="4" y="62" fill="#94a3b8" class="text-[10px] font-mono font-bold">1.6V (ไม่มี)</text>
+                  <text x="4" y="98" fill="#334155" class="text-[11px] font-mono font-black">0.0V (LOW)</text>
+                  <path d="M 82 94 L 125 94 L 125 22 L 195 22 L 195 94 L 250 94 L 250 22 L 320 22 L 320 94 L 365 94"
+                        fill="none" stroke="#0284c7" stroke-width="4.5" stroke-linejoin="round" />
+                  <text x="103" y="84" text-anchor="middle" fill="#475569" class="text-[10px] font-mono font-bold">ปิด (0)</text>
+                  <text x="160" y="14" text-anchor="middle" fill="#0284c7" class="text-[11px] font-mono font-black">เปิด (1)</text>
+                  <text x="222" y="84" text-anchor="middle" fill="#475569" class="text-[10px] font-mono font-bold">ปิด (0)</text>
+                  <text x="285" y="14" text-anchor="middle" fill="#0284c7" class="text-[11px] font-mono font-black">เปิด (1)</text>
                 </svg>
               </div>
 
-              <div class="text-xs space-y-1">
-                <div class="font-bold text-[var(--primary)]">ใช้กับอะไรในหุ่นยนต์ของเรา?</div>
-                <div>• ลำโพง Buzzer (ดัง <code>HIGH</code> / เงียบ <code>LOW</code>)</div>
-                <div>• ปุ่ม Limit Switch & เซนเซอร์ IR (กด / ไม่กด)</div>
-                <div>• การเลือกทิศทางหมุนของล้อ (เดินหน้า / ถอยหลัง)</div>
+              <div class="p-3 rounded-xl bg-white border border-sky-200 text-xs md:text-sm font-bold text-slate-800">
+                🔔 ใช้กับ: <b>ลำโพง Buzzer</b>, <b>ปุ่มสวิตช์</b>, และ <b>ทิศทางล้อ (เดินหน้า/ถอยหลัง)</b>
               </div>
             </div>
 
-            <div class="p-5 rounded-2xl bg-[var(--background)] border-2 border-[var(--border)] space-y-3">
+            <!-- ANALOG CARD -->
+            <div class="p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-400 space-y-3 shadow-sm">
               <div class="flex items-center justify-between">
-                <span class="px-3 py-1 rounded-full text-xs font-bold bg-[var(--secondary)] text-[var(--foreground)]">2. สัญญาณ ANALOG (แอนะล็อก)</span>
-                <span class="text-xl">🎛️ 🏎️</span>
+                <span class="px-3.5 py-1 rounded-xl text-sm font-black bg-emerald-600 text-white">2. ANALOG (แอนะล็อก)</span>
+                <span class="text-base font-black text-emerald-900">🎛️ เหมือน "คันเร่งรถยนต์"</span>
               </div>
-              <h3 class="text-lg font-extrabold">เปรียบเหมือน "วอลุ่มหรี่ไฟ / คันเร่งรถยนต์"</h3>
-              <p class="text-xs text-[var(--muted-foreground)]">
-                ค่อยๆ เพิ่มหรือลดระดับได้อย่าง<b>ลื่นไหลต่อเนื่อง</b> เป็นค่าอะไรก็ได้ระหว่าง 0V ถึง 3.3V (เช่น หมุนช้า ➔ หมุนกลาง ➔ หมุนเร็วสุด)
+              <p class="text-sm font-bold text-slate-700">
+                ค่อยๆ เพิ่ม-ลดระดับได้อย่าง<b>ลื่นไหลต่อเนื่อง</b> ตั้งแต่ 0% ถึง 100%
               </p>
 
-              <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)]">
-                <div class="text-[11px] font-bold text-[var(--muted-foreground)] mb-1 flex justify-between">
-                  <span>กราฟแรงดันไฟ Analog (ค่อยๆ ไต่ระดับลื่นไหล)</span>
-                  <span class="font-mono text-emerald-400">ปรับได้ทุกระดับ 0–100%</span>
-                </div>
-                <svg viewBox="0 0 380 115" class="w-full h-28 overflow-visible">
-                  <line x1="78" y1="22" x2="365" y2="22" stroke="currentColor" stroke-opacity="0.18" stroke-dasharray="4 4" />
-                  <line x1="78" y1="58" x2="365" y2="58" stroke="currentColor" stroke-opacity="0.18" stroke-dasharray="4 4" />
-                  <line x1="78" y1="94" x2="365" y2="94" stroke="currentColor" stroke-opacity="0.25" />
-                  <text x="4" y="26" fill="currentColor" class="text-[10px] font-mono font-bold">3.3V (เร็วสุด)</text>
-                  <text x="4" y="62" fill="currentColor" class="text-[10px] font-mono font-bold">1.6V (กลาง)</text>
-                  <text x="4" y="98" fill="currentColor" class="text-[10px] font-mono font-bold">0.0V (หยุด)</text>
-                  <path d="M 78 94 C 115 94, 130 58, 160 58 C 190 58, 205 22, 235 22 C 265 22, 285 58, 310 58 C 335 58, 345 94, 365 94 L 365 94 L 78 94 Z"
-                        fill="#34d399" fill-opacity="0.12" />
-                  <path d="M 78 94 C 115 94, 130 58, 160 58 C 190 58, 205 22, 235 22 C 265 22, 285 58, 310 58 C 335 58, 345 94, 365 94"
-                        fill="none" stroke="#34d399" stroke-width="3.5" stroke-linecap="round" />
-                  <circle cx="90" cy="94" r="4" fill="#34d399" />
-                  <text x="95" y="86" fill="currentColor" fill-opacity="0.8" class="text-[9px] font-mono">0%</text>
-                  <circle cx="160" cy="58" r="4" fill="#34d399" />
-                  <text x="160" y="48" text-anchor="middle" fill="#34d399" class="text-[9px] font-mono font-bold">เร่ง 50%</text>
-                  <circle cx="235" cy="22" r="4.5" fill="#34d399" />
-                  <text x="235" y="13" text-anchor="middle" fill="#34d399" class="text-[10px] font-mono font-bold">เร็วสุด 100%</text>
-                  <circle cx="310" cy="58" r="4" fill="#34d399" />
-                  <text x="310" y="48" text-anchor="middle" fill="#34d399" class="text-[9px] font-mono font-bold">ผ่อน 50%</text>
+              <!-- High-Contrast SVG Analog Graph -->
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-emerald-300">
+                <svg viewBox="0 0 380 115" class="w-full h-32 overflow-visible">
+                  <line x1="82" y1="22" x2="365" y2="22" stroke="#94a3b8" stroke-dasharray="4 4" stroke-width="1.5" />
+                  <line x1="82" y1="58" x2="365" y2="58" stroke="#94a3b8" stroke-dasharray="4 4" stroke-width="1.5" />
+                  <line x1="82" y1="94" x2="365" y2="94" stroke="#64748b" stroke-width="2" />
+                  <text x="4" y="26" fill="#047857" class="text-[11px] font-mono font-black">3.3V (100%)</text>
+                  <text x="4" y="62" fill="#059669" class="text-[11px] font-mono font-black">1.6V (50%)</text>
+                  <text x="4" y="98" fill="#334155" class="text-[11px] font-mono font-black">0.0V (0%)</text>
+                  <path d="M 82 94 C 115 94, 130 58, 160 58 C 190 58, 205 22, 235 22 C 265 22, 285 58, 310 58 C 335 58, 345 94, 365 94 L 365 94 L 82 94 Z"
+                        fill="#10b981" fill-opacity="0.18" />
+                  <path d="M 82 94 C 115 94, 130 58, 160 58 C 190 58, 205 22, 235 22 C 265 22, 285 58, 310 58 C 335 58, 345 94, 365 94"
+                        fill="none" stroke="#059669" stroke-width="4.5" stroke-linecap="round" />
+                  <circle cx="160" cy="58" r="5" fill="#059669" />
+                  <text x="160" y="46" text-anchor="middle" fill="#047857" class="text-[10px] font-mono font-black">เร่ง 50%</text>
+                  <circle cx="235" cy="22" r="5.5" fill="#059669" />
+                  <text x="235" y="12" text-anchor="middle" fill="#047857" class="text-[11px] font-mono font-black">เร็วสุด 100%</text>
+                  <circle cx="310" cy="58" r="5" fill="#059669" />
+                  <text x="310" y="46" text-anchor="middle" fill="#047857" class="text-[10px] font-mono font-black">ผ่อน 50%</text>
                 </svg>
               </div>
 
-              <div class="p-3 rounded-xl bg-[var(--secondary)] text-xs">
-                🤔 <b>คำถามชวนคิด:</b> ในเมื่อขาของ ESP32 จ่ายไฟ Digital ได้แค่ <b>เปิด (3.3V)</b> กับ <b>ปิด (0V)</b> แล้วมันจะสั่งให้ล้อมอเตอร์หมุนช้าๆ แบบ Analog ได้ยังไง? ➔ <i>คำตอบอยู่ในหน้าถัดไป!</i>
+              <div class="p-3 rounded-xl bg-amber-100 border border-amber-400 text-xs md:text-sm font-black text-amber-950">
+                🤔 ESP32 มีแต่ไฟ Digital (0 กับ 1) แล้วจะหรี่ความเร็วล้อแบบ Analog ได้อย่างไร? ➔
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 9
       {
         topic: "บทที่ 3: สัญญาณไฟฟ้า Digital, Analog & PWM",
         title: "🌊 ความลับของ PWM (Pulse Width Modulation)",
-        subtitle: "เทคนิค 'เปิด-ปิดไฟ Digital เร็วๆ (20,000 ครั้ง/วินาที)' เพื่อจำลองเป็นไฟ Analog ปรับความเร็วล้อ!",
+        subtitle: "กระพริบไฟ เปิด-ปิด เร็ว 20,000 ครั้ง/วินาที เพื่อจำลองเป็นคันเร่งความเร็ว (0 ถึง 255)",
         render: () => `
           <div class="space-y-4 my-auto">
-            <div class="p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <label class="text-sm font-bold flex items-center gap-3">
-                  <span>🎛️ ลองเลื่อนปรับค่า PWM (0–255):</span>
-                  <input id="pwm-slider" type="range" min="0" max="255" value="128" oninput="updatePwmSim(this.value)" class="w-44 md:w-64 accent-[var(--primary)] cursor-pointer" />
+            <div class="p-6 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-4 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <label class="text-base md:text-lg font-black text-sky-950 flex items-center gap-3">
+                  <span>🎛️ เลื่อนปรับคันเร่ง PWM (0–255):</span>
+                  <input id="pwm-slider" type="range" min="0" max="255" value="128" oninput="updatePwmSim(this.value)" class="w-48 md:w-72 h-3 accent-sky-600 cursor-pointer" />
                 </label>
-                <div class="flex items-center gap-2 font-mono text-xs">
-                  <span id="pwm-val-badge" class="px-2.5 py-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">ledcWrite(ch, 128)</span>
-                  <span id="pwm-duty-badge" class="px-2.5 py-1 rounded bg-[var(--secondary)] font-bold">Duty Cycle: 50%</span>
+                <div class="flex items-center gap-2 font-mono text-sm">
+                  <span id="pwm-val-badge" class="px-3.5 py-1.5 rounded-xl bg-slate-900 text-amber-300 font-black">ledcWrite(ch, 128)</span>
+                  <span id="pwm-duty-badge" class="px-3.5 py-1.5 rounded-xl bg-sky-600 text-white font-black">เปิดไฟ: 50%</span>
                 </div>
               </div>
 
-              <div class="flex flex-wrap gap-2 text-xs">
-                <button onclick="updatePwmSim(0)" class="px-2.5 py-1 rounded-lg bg-[var(--secondary)] hover:opacity-80 font-mono">0 (หยุดนิ่ง 0%)</button>
-                <button onclick="updatePwmSim(64)" class="px-2.5 py-1 rounded-lg bg-[var(--secondary)] hover:opacity-80 font-mono">64 (ช้า 25%)</button>
-                <button onclick="updatePwmSim(128)" class="px-2.5 py-1 rounded-lg bg-[var(--secondary)] hover:opacity-80 font-mono">128 (กลาง 50%)</button>
-                <button onclick="updatePwmSim(200)" class="px-2.5 py-1 rounded-lg bg-[var(--secondary)] hover:opacity-80 font-mono">200 (เร็ว 78%)</button>
-                <button onclick="updatePwmSim(255)" class="px-2.5 py-1 rounded-lg bg-[var(--secondary)] hover:opacity-80 font-mono">255 (เร็วสุด 100%)</button>
+              <div class="flex flex-wrap gap-2 text-xs md:text-sm font-bold">
+                <button onclick="updatePwmSim(0)" class="px-3.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 hover:border-sky-500 font-mono cursor-pointer">0 (หยุด 0%)</button>
+                <button onclick="updatePwmSim(64)" class="px-3.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 hover:border-sky-500 font-mono cursor-pointer">64 (ช้า 25%)</button>
+                <button onclick="updatePwmSim(128)" class="px-3.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 hover:border-sky-500 font-mono cursor-pointer">128 (กลาง 50%)</button>
+                <button onclick="updatePwmSim(200)" class="px-3.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 hover:border-sky-500 font-mono cursor-pointer">200 (เร็ว 78%)</button>
+                <button onclick="updatePwmSim(255)" class="px-3.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 hover:border-sky-500 font-mono cursor-pointer">255 (เร็วสุด 100%)</button>
               </div>
 
-              <div class="grid md:grid-cols-3 gap-4 items-center pt-1">
-                <div class="md:col-span-2 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
-                  <div class="text-xs text-[var(--muted-foreground)] mb-1 flex justify-between">
-                    <span>กราฟสัญญาณไฟที่กระพริบเปิด-ปิด 20,000 ครั้ง/วินาที (PWM_FREQ = 20000)</span>
-                    <span id="pwm-avg-volt" class="font-mono font-bold text-[var(--primary)]">ไฟเฉลี่ย ~50%</span>
+              <div class="grid md:grid-cols-3 gap-5 items-center pt-1">
+                <div class="md:col-span-2 bg-white border-2 border-sky-300 rounded-2xl p-4">
+                  <div class="text-xs md:text-sm font-bold text-slate-600 mb-1 flex justify-between">
+                    <span>กราฟคลื่น PWM (ยิ่งช่วง HIGH กว้าง มอเตอร์ยิ่งได้ไฟเยอะ)</span>
+                    <span id="pwm-avg-volt" class="font-mono font-black text-sky-700">ไฟเฉลี่ย ~50% (1.7V)</span>
                   </div>
-                  <canvas id="pwm-canvas" width="520" height="120" class="w-full h-[120px] block"></canvas>
+                  <canvas id="pwm-canvas" width="520" height="125" class="w-full h-[125px] block"></canvas>
                 </div>
 
-                <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex flex-col items-center justify-center text-center space-y-2 h-full">
-                  <div class="text-xs font-bold text-[var(--muted-foreground)]">ผลลัพธ์ที่ล้อมอเตอร์</div>
-                  <div id="pwm-wheel-icon" class="w-16 h-16 rounded-full border-4 border-dashed border-[var(--primary)] flex items-center justify-center text-2xl">
+                <div class="bg-white border-2 border-sky-300 rounded-2xl p-4 flex flex-col items-center justify-center text-center space-y-2 h-full">
+                  <div class="text-xs font-black text-slate-500 uppercase">ความเร็วล้อมอเตอร์</div>
+                  <div id="pwm-wheel-icon" class="w-20 h-20 rounded-full border-4 border-dashed border-sky-600 flex items-center justify-center text-4xl">
                     🛞
                   </div>
-                  <div id="pwm-motor-status" class="text-sm font-extrabold">หมุนความเร็วปานกลาง (50%)</div>
+                  <div id="pwm-motor-status" class="text-base font-black text-slate-900">หมุนปานกลาง (50%)</div>
                 </div>
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 10
       {
         topic: "บทที่ 3: สัญญาณไฟฟ้า Digital, Analog & PWM",
         title: "⚡ สรุป 3 คำสั่งหลักควบคุมไฟฟ้าในโค้ดของเรา",
-        subtitle: "จำแค่ 3 คำสั่งนี้ ก็อ่านโค้ดสั่งงานฮาร์ดแวร์ใน main.cpp ออกทั้งหมด!",
+        subtitle: "จำแค่ 3 คำสั่งนี้ อ่านโค้ดสั่งงานฮาร์ดแวร์ใน main.cpp ออกทั้งหมด!",
         render: () => `
-          <div class="space-y-4 my-auto">
-            <div class="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--background)]">
-              <table class="w-full text-left border-collapse text-xs md:text-sm">
-                <thead>
-                  <tr class="bg-[var(--secondary)] text-[var(--foreground)] border-b border-[var(--border)]">
-                    <th class="p-3.5 font-extrabold">ประเภทสัญญาณ</th>
-                    <th class="p-3.5 font-extrabold">คำสั่งใน Arduino (C++)</th>
-                    <th class="p-3.5 font-extrabold">ค่าที่ใช้</th>
-                    <th class="p-3.5 font-extrabold">ใช้ทำอะไรในหุ่นยนต์ของเรา?</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-[var(--border)]">
-                  <tr>
-                    <td class="p-3.5 font-bold">1. Digital Output<br><span class="text-xs font-normal text-[var(--muted-foreground)]">(สั่งเปิด/ปิดไฟ)</span></td>
-                    <td class="p-3.5 font-mono text-[var(--primary)] font-bold">digitalWrite(pin, val);</td>
-                    <td class="p-3.5 font-mono">HIGH (1)<br>LOW (0)</td>
-                    <td class="p-3.5">• เปิด/ปิดเสียงลำโพง Buzzer<br>• เลือกทิศหมุนล้อ (เดินหน้า/ถอยหลัง)</td>
-                  </tr>
-                  <tr>
-                    <td class="p-3.5 font-bold">2. Digital Input<br><span class="text-xs font-normal text-[var(--muted-foreground)]">(อ่านค่าสวิตช์/เซนเซอร์)</span></td>
-                    <td class="p-3.5 font-mono text-[var(--primary)] font-bold">digitalRead(pin);</td>
-                    <td class="p-3.5 font-mono">คืนค่ากลับมาเป็น<br>HIGH หรือ LOW</td>
-                    <td class="p-3.5">• อ่านว่า Limit Switch โดนชนหรือยัง<br>• อ่านว่าเซนเซอร์ IR เจอวัตถุไหม</td>
-                  </tr>
-                  <tr>
-                    <td class="p-3.5 font-bold">3. PWM Output<br><span class="text-xs font-normal text-[var(--muted-foreground)]">(จำลอง Analog ปรับความแรง)</span></td>
-                    <td class="p-3.5 font-mono text-[var(--primary)] font-bold">ledcWrite(ch, speed);</td>
-                    <td class="p-3.5 font-mono">ตัวเลข<br><b>0 ถึง 255</b></td>
-                    <td class="p-3.5">• เหยียบคันเร่งปรับความเร็วล้อซ้าย-ขวา (0 = หยุด, 255 = เร็วสุด!)</td>
-                  </tr>
-                </tbody>
-              </table>
+          <div class="grid md:grid-cols-3 gap-5 my-auto">
+            <!-- Card 1 -->
+            <div class="p-6 rounded-3xl bg-sky-50 border-2 border-sky-400 flex flex-col justify-between space-y-4 shadow-sm">
+              <div class="space-y-2">
+                <span class="px-3 py-1 rounded-xl bg-sky-600 text-white text-xs font-black">1. DIGITAL OUTPUT</span>
+                <h3 class="text-xl font-black text-sky-950">สั่ง เปิด / ปิด ไฟ</h3>
+                <div class="p-3 rounded-2xl bg-slate-900 text-amber-300 font-mono text-sm font-bold text-center">
+                  digitalWrite(ขา, HIGH/LOW);
+                </div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border border-sky-200 text-sm font-bold text-slate-800 space-y-1">
+                <div>🔔 เปิด/ปิดเสียงลำโพง Buzzer</div>
+                <div>🔄 เลือกทิศล้อ (เดินหน้า/ถอยหลัง)</div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="p-6 rounded-3xl bg-amber-50 border-2 border-amber-400 flex flex-col justify-between space-y-4 shadow-sm">
+              <div class="space-y-2">
+                <span class="px-3 py-1 rounded-xl bg-amber-500 text-white text-xs font-black">2. DIGITAL INPUT</span>
+                <h3 class="text-xl font-black text-amber-950">อ่านค่าปุ่ม / เซนเซอร์</h3>
+                <div class="p-3 rounded-2xl bg-slate-900 text-amber-300 font-mono text-sm font-bold text-center">
+                  digitalRead(ขา);
+                </div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border border-amber-200 text-sm font-bold text-slate-800 space-y-1">
+                <div>🔘 เช็กว่า Limit Switch โดนกดไหม</div>
+                <div>🔴 เช็กว่าเซนเซอร์ IR เจอวัตถุไหม</div>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="p-6 rounded-3xl bg-emerald-50 border-2 border-emerald-400 flex flex-col justify-between space-y-4 shadow-sm">
+              <div class="space-y-2">
+                <span class="px-3 py-1 rounded-xl bg-emerald-600 text-white text-xs font-black">3. PWM OUTPUT</span>
+                <h3 class="text-xl font-black text-emerald-950">ปรับความแรง (0–255)</h3>
+                <div class="p-3 rounded-2xl bg-slate-900 text-amber-300 font-mono text-sm font-bold text-center">
+                  ledcWrite(ช่อง, 0..255);
+                </div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border border-emerald-200 text-sm font-bold text-slate-800 space-y-1">
+                <div>🏎️ เหยียบคันเร่งความเร็วล้อซ้าย-ขวา</div>
+                <div>🛑 <code>0</code> = หยุดนิ่ง | 🚀 <code>255</code> = เร็วสุด!</div>
+              </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 11
       {
         topic: "บทที่ 4: รู้จัก Arduino IDE & Library",
-        title: "🛠️ รู้จัก Arduino IDE และโครงสร้าง 2 ห้องหัวใจหลัก",
-        subtitle: "โปรแกรมเขียนโค้ด Arduino ทุกไฟล์ในโลก จะต้องมี 2 ฟังก์ชันหลักนี้เสมอ",
+        title: "🛠️ โครงสร้างโค้ด Arduino & ปุ่มสำคัญ",
+        subtitle: "ทุกโปรแกรมของหุ่นยนต์ แบ่งออกเป็น 2 ห้องหลักเสมอ",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-5 my-auto">
-            <div class="space-y-3">
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-l-4 border-[var(--primary)] space-y-1.5">
-                <div class="font-mono font-extrabold text-base text-[var(--primary)]">1. void setup() { ... }</div>
-                <div class="text-xs font-bold">🌅 ตื่นนอนทำแค่ "ครั้งเดียว" ตอนเปิดสวิตช์หุ่นยนต์</div>
-                <p class="text-xs text-[var(--muted-foreground)]">
-                  ใช้ตั้งค่าเริ่มต้น เช่น บอกว่าขาไหนเป็น Input/Output (<code>pinMode</code>), เปิดสัญญาณ Wi-Fi, และร้องปี๊บแจ้งว่าหุ่นยนต์พร้อมแล้ว
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <!-- Left: setup() vs loop() -->
+            <div class="md:col-span-7 space-y-4">
+              <div class="p-5 rounded-3xl bg-amber-50 border-l-8 border-amber-500 border-2 space-y-1 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="font-mono font-black text-xl text-amber-900">void setup() { ... }</span>
+                  <span class="px-3 py-1 rounded-xl bg-amber-500 text-white text-xs font-black">ทำครั้งเดียว!</span>
+                </div>
+                <p class="text-sm font-bold text-slate-700">
+                  🌅 ตื่นนอนตอนเปิดสวิตช์: ตั้งค่าขาพิน, เปิดสัญญาณ Wi-Fi, ร้องปี๊บพร้อมทำงาน
                 </p>
               </div>
 
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-l-4 border-[var(--primary)] space-y-1.5">
-                <div class="font-mono font-extrabold text-base text-[var(--primary)]">2. void loop() { ... }</div>
-                <div class="text-xs font-bold">💓 หัวใจเต้น "วนซ้ำไปเรื่อยๆ" ไม่มีวันหยุดจนกว่าจะปิดเครื่อง</div>
-                <p class="text-xs text-[var(--muted-foreground)]">
-                  ใช้คอยรับคำสั่งจากจอยมือถือ (<code>server.handleClient()</code>), คอยเช็กปุ่มชนสวิตช์, และคอยเช็กระบบความปลอดภัย
+              <div class="p-5 rounded-3xl bg-sky-50 border-l-8 border-sky-600 border-2 space-y-1 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="font-mono font-black text-xl text-sky-900">void loop() { ... }</span>
+                  <span class="px-3 py-1 rounded-xl bg-sky-600 text-white text-xs font-black">วนซ้ำตลอดเวลา!</span>
+                </div>
+                <p class="text-sm font-bold text-slate-700">
+                  💓 หัวใจเต้นไม่หยุด: คอยรับคำสั่งจากจอยมือถือ และเช็กเซนเซอร์ตลอดเวลา
                 </p>
               </div>
             </div>
 
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">3 ปุ่มสำคัญบนโปรแกรม Arduino IDE</div>
-              <div class="space-y-2.5 text-xs">
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex items-center gap-3">
-                  <span class="w-8 h-8 rounded-lg bg-[var(--secondary)] flex items-center justify-center font-bold text-base">✔️</span>
-                  <div>
-                    <div class="font-bold">Verify (Compile) — ตรวจคำผิด</div>
-                    <div class="text-[var(--muted-foreground)]">เช็กว่าเราลืมใส่ <code>;</code> หรือพิมพ์ชื่อคำสั่งผิดไหม</div>
-                  </div>
+            <!-- Right: 3 IDE Buttons -->
+            <div class="md:col-span-5 p-5 rounded-3xl bg-slate-100 border-2 border-slate-300 space-y-3">
+              <div class="text-base font-black text-slate-900">3 ปุ่มที่ใช้บ่อยที่สุดใน Arduino IDE</div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center gap-3.5">
+                <span class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shrink-0">✓</span>
+                <div>
+                  <div class="text-base font-black">Verify (ตรวจคำผิด)</div>
+                  <div class="text-xs font-bold text-slate-600">เช็กว่าพิมพ์โค้ดและใส่ <code>;</code> ครบไหม</div>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex items-center gap-3">
-                  <span class="w-8 h-8 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center font-bold text-base">➡️</span>
-                  <div>
-                    <div class="font-bold">Upload — ส่งโค้ดเข้าสมองหุ่นยนต์</div>
-                    <div class="text-[var(--muted-foreground)]">ส่งโค้ดที่แปลเสร็จแล้วผ่านสาย USB เข้าสู่บอร์ด ESP32</div>
-                  </div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-sky-500 flex items-center gap-3.5 shadow-sm">
+                <span class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center font-black text-xl shrink-0">➔</span>
+                <div>
+                  <div class="text-base font-black text-sky-900">Upload (ส่งเข้าหุ่นยนต์)</div>
+                  <div class="text-xs font-bold text-slate-600">ส่งโค้ดผ่านสาย USB เข้าสมอง ESP32</div>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex items-center gap-3">
-                  <span class="w-8 h-8 rounded-lg bg-[var(--secondary)] flex items-center justify-center font-bold text-base">🔍</span>
-                  <div>
-                    <div class="font-bold">Serial Monitor — หน้าต่างแชทคุยกับหุ่นยนต์</div>
-                    <div class="text-[var(--muted-foreground)]">ดูข้อความที่หุ่นยนต์ส่งกลับมาบอก เช่น ชื่อ Wi-Fi หรือค่าเซนเซอร์</div>
-                  </div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-300 flex items-center gap-3.5">
+                <span class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shrink-0">🔍</span>
+                <div>
+                  <div class="text-base font-black">Serial Monitor</div>
+                  <div class="text-xs font-bold text-slate-600">หน้าต่างดูข้อความที่หุ่นยนต์ส่งกลับมา</div>
                 </div>
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 12
       {
         topic: "บทที่ 4: รู้จัก Arduino IDE & Library",
         title: "📚 Library = คลังอาวุธเสริม (เหมือนลง Mod เกม!)",
-        subtitle: "ไม่ต้องเขียนโค้ดหมื่นบรรทัดเอง แค่ใช้ #include ดึงความสามารถพิเศษมาใช้ได้เลย",
+        subtitle: "ใช้คำสั่ง #include ดึงฟีเจอร์ยากๆ มาใช้งานได้ทันทีโดยไม่ต้องเขียนเองตั้งแต่ศูนย์",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-6 items-center my-auto">
-            <div class="space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">บรรทัดที่ 3–7 ในไฟล์ main.cpp ของเรา:</div>
-              <pre class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>#include &lt;Arduino.h&gt;     // คำสั่งพื้นฐาน Arduino
-#include &lt;WiFi.h&gt;        // 🛜 เสกสัญญาณ Wi-Fi
-#include &lt;WebServer.h&gt;   // 🌐 สร้างหน้าเว็บจอยเกม
-#include &lt;ESP32Servo.h&gt;  // 🦾 สั่งหมุนแขนกล Servo
-#include &lt;Preferences.h&gt; // 💾 บันทึกค่าลงหน่วยความจำ</code></pre>
-              <div class="p-3 rounded-xl bg-[var(--secondary)] text-xs">
-                💡 <b>เปรียบเทียบง่ายๆ:</b> เหมือนเวลาเราต่อเลโก้ หรือลง <b>Mod ในเกม Minecraft</b> ที่มีคนสร้างบล็อกสำเร็จรูปไว้ให้แล้ว เราแค่หยิบมาประกอบเป็นหุ่นยนต์ของเรา!
-              </div>
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <div class="md:col-span-5 p-5 rounded-3xl bg-slate-900 text-slate-100 border-2 border-slate-700 space-y-3 shadow-md">
+              <div class="text-xs font-bold text-sky-400">บรรทัดบนสุดของไฟล์ main.cpp:</div>
+              <pre class="text-sm md:text-base leading-loose font-bold"><code><span class="text-amber-300">#include</span> &lt;Arduino.h&gt;
+<span class="text-amber-300">#include</span> &lt;WiFi.h&gt;
+<span class="text-amber-300">#include</span> &lt;WebServer.h&gt;
+<span class="text-amber-300">#include</span> &lt;ESP32Servo.h&gt;</code></pre>
             </div>
 
-            <div class="grid grid-cols-1 gap-2.5 text-xs">
-              <div class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                <div class="font-bold text-sm text-[var(--primary)]">🛜 &lt;WiFi.h&gt;</div>
-                <div class="text-[var(--muted-foreground)] mt-0.5">ช่วยให้บอร์ด ESP32 กระจายสัญญาณ Wi-Fi ชื่อ <code>"ESP32-CAR"</code> ออกมาให้มือถือเชื่อมต่อ</div>
-              </div>
-              <div class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                <div class="font-bold text-sm text-[var(--primary)]">🎮 &lt;WebServer.h&gt;</div>
-                <div class="text-[var(--muted-foreground)] mt-0.5">เมื่อมือถือเปิดเว็บ <code>192.168.4.1</code> ไลบรารีนี้จะส่งหน้าจอยเกมไปให้ และคอยรับคำสั่งเวลากดปุ่ม</div>
-              </div>
-              <div class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                <div class="font-bold text-sm text-[var(--primary)]">🦾 &lt;ESP32Servo.h&gt;</div>
-                <div class="text-[var(--muted-foreground)] mt-0.5">แปลงตัวเลขมุมองศา <code>0–180°</code> ให้กลายเป็นสัญญาณพัลส์ PWM ไปหมุนมอเตอร์ Servo ได้ทันทีด้วยคำสั่ง <code>servos[n].write(angle)</code></div>
-              </div>
-            </div>
-          </div>
-        `
-      },
-      {
-        topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
-        title: "🔍 ผ่าโค้ดจริง #1: สั่งลำโพงร้องปี๊บ (Digital Output)",
-        subtitle: "จากไฟล์ main.cpp บรรทัดที่ 21 และ 243–245",
-        render: () => `
-          <div class="grid md:grid-cols-2 gap-6 items-center my-auto">
-            <div class="space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">โค้ดจริงจาก main.cpp:</div>
-              <pre class="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>const int BUZZER = 15; // ลำโพงต่ออยู่ที่ขา GPIO 15
-
-// ตอนเปิดเครื่องใน setup()
-pinMode(BUZZER, OUTPUT); // ตั้งขา 15 เป็นขาปล่อยไฟออก
-
-// ฟังก์ชันสั่งให้ร้องปี๊บตามเวลา ms (มิลลิวินาที)
-void beep(int ms) {
-    digitalWrite(BUZZER, HIGH); // 1. เปิดไฟ 3.3V (ลำโพงดัง!)
-    delay(ms);                  // 2. รอเวลา ms มิลลิวินาที
-    digitalWrite(BUZZER, LOW);  // 3. ปิดไฟ 0V (ลำโพงเงียบ)
-}</code></pre>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-4">
-              <div class="text-sm font-extrabold">⏱️ หน่วยเวลาในโค้ดหุ่นยนต์: มิลลิวินาที (ms)</div>
-              <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs space-y-1.5">
-                <div>• <b>1,000 มิลลิวินาที (ms) = 1 วินาที</b></div>
-                <div>• <code>beep(80);</code> = ดังปี๊บสั้นจิ๋ว (0.08 วินาที ตอนเปิดเครื่อง)</div>
-                <div>• <code>beep(150);</code> = ดังตอนชนสวิตช์ (<code>hitBeep</code>)</div>
-                <div>• <code>beep(600);</code> = ดังเตือนยาวๆ เมื่อเกิดข้อผิดพลาด</div>
-              </div>
-              <div class="flex flex-wrap gap-2 pt-1">
-                <button onclick="playSimBeep(80)" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 active:scale-95 transition">
-                  🔊 ลองกด beep(80)
-                </button>
-                <button onclick="playSimBeep(600)" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 active:scale-95 transition">
-                  🔊 ลองกด beep(600)
-                </button>
-              </div>
-              <div id="beep-status" class="text-center font-mono text-xs text-[var(--muted-foreground)]">
-                คลิกปุ่มด้านบนเพื่อจำลองการทำงานของ <code>digitalWrite(BUZZER, HIGH/LOW)</code>
-              </div>
-            </div>
-          </div>
-        `
-      },
-      {
-        topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
-        title: "🔍 ผ่าโค้ดจริง #2: ขับเคลื่อนล้อซ้าย-ขวา (Digital + PWM)",
-        subtitle: "จากไฟล์ main.cpp บรรทัดที่ 89–102 — ผสมผสานทั้ง Digital (เลือกทิศ) และ PWM (เหยียบคันเร่ง)",
-        render: () => `
-          <div class="grid md:grid-cols-2 gap-5 items-center my-auto">
-            <div class="space-y-2.5">
-              <pre class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>void driveMotor(int in1, int in2, int ch, int speed) {
-  speed = constrain(speed, -255, 255); // ล็อกค่า -255..255
-
-  // 1. ใช้ DIGITAL เลือกทิศทางหมุนของล้อ
-  digitalWrite(in1, speed > 0); // บวก = เดินหน้า
-  digitalWrite(in2, speed < 0); // ลบ  = ถอยหลัง
-
-  // 2. ใช้ PWM เหยียบคันเร่งปรับความเร็ว (0 ถึง 255)
-  ledcWrite(ch, abs(speed));
-}
-
-void drive(int left, int right) {
-  driveMotor(AIN1, AIN2, CH_A, left);  // สั่งล้อซ้าย
-  driveMotor(BIN1, BIN2, CH_B, right); // สั่งล้อขวา
-}</code></pre>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">🎮 ลองกดเรียกฟังก์ชัน drive(ซ้าย, ขวา) เพื่อดูทิศทางรถ</div>
-              <div class="grid grid-cols-2 gap-1.5 text-xs font-mono">
-                <button onclick="setDriveSim(200, 200)" class="p-2 rounded-lg bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition font-bold">drive(200, 200)</button>
-                <button onclick="setDriveSim(-200, -200)" class="p-2 rounded-lg bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition font-bold">drive(-200, -200)</button>
-                <button onclick="setDriveSim(200, -200)" class="p-2 rounded-lg bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition font-bold">drive(200, -200)</button>
-                <button onclick="setDriveSim(-200, 200)" class="p-2 rounded-lg bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition font-bold">drive(-200, 200)</button>
-                <button onclick="setDriveSim(0, 0)" class="col-span-2 p-1.5 rounded-lg bg-[var(--card)] border border-[var(--border)] font-bold">drive(0, 0) — เบรกรถหยุดนิ่ง</button>
-              </div>
-
-              <div class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-around">
-                <div class="text-center">
-                  <div class="text-xs text-[var(--muted-foreground)]">ล้อซ้าย (Left)</div>
-                  <div id="sim-wheel-l" class="w-6 h-14 mx-auto my-1 rounded border-2 border-[var(--foreground)] tread-pattern"></div>
-                  <div id="sim-val-l" class="font-mono text-xs font-bold">0</div>
-                </div>
-
-                <div class="text-center space-y-1">
-                  <div id="sim-car-body" class="text-3xl transition-transform duration-300">⬆️ 🤖</div>
-                  <div id="sim-car-desc" class="text-xs font-extrabold text-[var(--primary)]">จอดสนิท (PWM = 0)</div>
-                </div>
-
-                <div class="text-center">
-                  <div class="text-xs text-[var(--muted-foreground)]">ล้อขวา (Right)</div>
-                  <div id="sim-wheel-r" class="w-6 h-14 mx-auto my-1 rounded border-2 border-[var(--foreground)] tread-pattern"></div>
-                  <div id="sim-val-r" class="font-mono text-xs font-bold">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        `
-      },
-      {
-        topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
-        title: "🔍 ผ่าโค้ดจริง #3: แขนกล มือคีบ และระบบหาจุดศูนย์ (Homing)",
-        subtitle: "จากไฟล์ main.cpp บรรทัดที่ 52, 154–183 และ 490–494",
-        render: () => `
-          <div class="grid md:grid-cols-2 gap-5 items-center my-auto">
-            <div class="space-y-3">
-              <div class="text-xs font-bold text-[var(--primary)]">1. กดปุ่ม O สลับอ้า/หุบมือคีบ (Toggle):</div>
-              <pre class="p-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>oOn = !oOn;        // สลับค่า จริง <-> เท็จ ทุกครั้งที่กด
-if (oOn == true) {
-    setServo(6, 90); // กางมือคีบไปที่มุม 90 องศา
-} else {
-    setServo(6, 0);  // หุบมือคีบกลับมาที่มุม 0 องศา
-}</code></pre>
-
-              <div class="text-xs font-bold text-[var(--primary)]">2. ระบบ Homing (เลื่อนลงจนชนสวิตช์ = 0°):</div>
-              <pre class="p-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>homeRun(+1, HOME_SPEED_US); // หมุนแขนลงช้าๆ
-while (!limitPressed()) {   // วนรอจนกว่าจะชนสวิตช์
-    delay(2);
-}
-homeStop();                 // ชนปุ๊บ สั่งหยุดทันที!
-hitBeep();                  // ร้องปี๊บแจ้งว่าตั้งศูนย์เสร็จแล้ว</code></pre>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-4">
-              <div class="text-xs font-bold text-[var(--primary)]">🎮 ลองกดปุ่มเหมือนบนจอยมือถือ</div>
-              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-between">
+            <div class="md:col-span-7 grid grid-cols-1 gap-3.5">
+              <div class="p-4 rounded-2xl bg-sky-50 border-2 border-sky-400 flex items-center gap-4">
+                <span class="text-4xl">🛜</span>
                 <div>
-                  <div class="text-xs text-[var(--muted-foreground)]">สถานะมือคีบ (Servo ตัวที่ 7 - GP23)</div>
-                  <div id="gripper-status" class="text-sm font-extrabold mt-0.5">🦀 หุบอยู่ (oOn = false ➔ 0°)</div>
+                  <div class="text-lg font-black text-sky-950 font-mono">&lt;WiFi.h&gt;</div>
+                  <div class="text-sm font-bold text-slate-700">เสกให้บอร์ดปล่อยสัญญาณ Wi-Fi ชื่อ <code>"ESP32-CAR"</code></div>
                 </div>
-                <button onclick="toggleGripperSim()" class="px-4 py-2.5 rounded-full font-extrabold text-xs bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 active:scale-95 transition">
-                  ⭕ กดปุ่ม O (สลับคีบ/ปล่อย)
+              </div>
+              <div class="p-4 rounded-2xl bg-indigo-50 border-2 border-indigo-400 flex items-center gap-4">
+                <span class="text-4xl">🎮</span>
+                <div>
+                  <div class="text-lg font-black text-indigo-950 font-mono">&lt;WebServer.h&gt;</div>
+                  <div class="text-sm font-bold text-slate-700">ส่งหน้าเว็บจอยบังคับไปที่มือถือ และรับคำสั่งเมื่อเรากดปุ่ม</div>
+                </div>
+              </div>
+              <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 flex items-center gap-4">
+                <span class="text-4xl">🦾</span>
+                <div>
+                  <div class="text-lg font-black text-emerald-950 font-mono">&lt;ESP32Servo.h&gt;</div>
+                  <div class="text-sm font-bold text-slate-700">สั่งหมุนแขนกล Servo ไปยังองศาที่ต้องการ (<code>0–180°</code>) ได้ทันที</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+
+      // SLIDE 13
+      {
+        topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
+        title: "🔍 โค้ดจริง #1: สั่งลำโพงร้องปี๊บ (Digital Output)",
+        subtitle: "เปิดไฟ (HIGH) ➔ รอเวลา (delay) ➔ ปิดไฟ (LOW)",
+        render: () => `
+          <div class="grid md:grid-cols-12 gap-6 items-center my-auto">
+            <div class="md:col-span-7 p-5 rounded-3xl bg-slate-900 text-slate-100 border-2 border-slate-700 shadow-md">
+              <div class="text-xs font-bold text-sky-400 mb-2">จากไฟล์ main.cpp (บรรทัดที่ 21 และ 243):</div>
+              <pre class="text-sm md:text-base leading-relaxed overflow-x-auto"><code><span class="text-sky-400 font-bold">const int</span> BUZZER = <span class="text-amber-300 font-bold">15</span>; <span class="text-slate-400">// ลำโพงอยู่ขา 15</span>
+
+<span class="text-sky-400 font-bold">void beep(int ms)</span> {
+    <span class="text-emerald-400 font-bold">digitalWrite(BUZZER, HIGH);</span> <span class="text-slate-400">// 1. เปิดไฟ (ดัง!)</span>
+    <span class="text-amber-300 font-bold">delay(ms);</span>                  <span class="text-slate-400">// 2. รอเวลา ms</span>
+    <span class="text-rose-400 font-bold">digitalWrite(BUZZER, LOW);</span>  <span class="text-slate-400">// 3. ปิดไฟ (เงียบ)</span>
+}</code></pre>
+            </div>
+
+            <div class="md:col-span-5 p-6 rounded-3xl bg-amber-50 border-2 border-amber-400 space-y-4 text-center shadow-sm">
+              <div class="text-2xl font-black text-amber-950">⏱️ 1,000 ms = 1 วินาที</div>
+              <div class="flex flex-col gap-3">
+                <button onclick="playSimBeep(80)" class="py-3.5 px-4 rounded-2xl text-base font-black bg-sky-600 text-white hover:bg-sky-700 active:scale-95 transition shadow-md cursor-pointer">
+                  🔊 กดฟังเสียง beep(80) — สั้น
+                </button>
+                <button onclick="playSimBeep(600)" class="py-3.5 px-4 rounded-2xl text-base font-black bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 transition shadow-md cursor-pointer">
+                  🔊 กดฟังเสียง beep(600) — ยาว
+                </button>
+              </div>
+              <div id="beep-status" class="p-2.5 rounded-xl bg-white border border-amber-300 font-mono text-xs font-bold text-slate-700">
+                คลิกปุ่มด้านบนเพื่อฟังเสียงจำลอง
+              </div>
+            </div>
+          </div>
+        `
+      },
+
+      // SLIDE 14
+      {
+        topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
+        title: "🔍 โค้ดจริง #2: ขับล้อซ้าย-ขวา (Digital + PWM)",
+        subtitle: "ใช้ Digital เลือกทิศทาง (เดินหน้า/ถอยหลัง) + ใช้ PWM เหยียบคันเร่ง (0–255)",
+        render: () => `
+          <div class="grid md:grid-cols-12 gap-5 items-center my-auto">
+            <div class="md:col-span-6 p-5 rounded-3xl bg-slate-900 text-slate-100 border-2 border-slate-700 shadow-md">
+              <pre class="text-xs md:text-sm leading-relaxed overflow-x-auto"><code><span class="text-sky-400 font-bold">void driveMotor(..., int speed)</span> {
+  speed = constrain(speed, -255, 255);
+
+  <span class="text-slate-400">// 1. DIGITAL เลือกทิศทางหมุน</span>
+  <span class="text-emerald-400 font-bold">digitalWrite(in1, speed &gt; 0);</span> <span class="text-slate-400">// บวก = เดินหน้า</span>
+  <span class="text-rose-400 font-bold">digitalWrite(in2, speed &lt; 0);</span> <span class="text-slate-400">// ลบ  = ถอยหลัง</span>
+
+  <span class="text-slate-400">// 2. PWM เหยียบคันเร่ง (0 ถึง 255)</span>
+  <span class="text-amber-300 font-bold">ledcWrite(ch, abs(speed));</span>
+}</code></pre>
+            </div>
+
+            <!-- Interactive Robot Drive Tester -->
+            <div class="md:col-span-6 p-5 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-3 shadow-sm">
+              <div class="text-sm font-black text-sky-950">🎮 ลองกดสั่ง drive(ล้อซ้าย, ล้อขวา):</div>
+              <div class="grid grid-cols-2 gap-2 text-xs md:text-sm font-mono">
+                <button onclick="setDriveSim(200, 200)" class="p-2.5 rounded-xl bg-white border-2 border-sky-300 hover:bg-sky-600 hover:text-white transition font-black cursor-pointer">drive(200, 200)</button>
+                <button onclick="setDriveSim(-200, -200)" class="p-2.5 rounded-xl bg-white border-2 border-sky-300 hover:bg-sky-600 hover:text-white transition font-black cursor-pointer">drive(-200, -200)</button>
+                <button onclick="setDriveSim(200, -200)" class="p-2.5 rounded-xl bg-white border-2 border-sky-300 hover:bg-sky-600 hover:text-white transition font-black cursor-pointer">drive(200, -200)</button>
+                <button onclick="setDriveSim(-200, 200)" class="p-2.5 rounded-xl bg-white border-2 border-sky-300 hover:bg-sky-600 hover:text-white transition font-black cursor-pointer">drive(-200, 200)</button>
+                <button onclick="setDriveSim(0, 0)" class="col-span-2 p-2 rounded-xl bg-rose-600 text-white font-black cursor-pointer">drive(0, 0) — หยุดรถ</button>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-white border-2 border-sky-300 flex items-center justify-around">
+                <div class="text-center">
+                  <div class="text-xs font-black text-slate-600">ล้อซ้าย</div>
+                  <div id="sim-wheel-l" class="w-8 h-16 mx-auto my-1.5 rounded-md border-2 border-slate-900 tread-pattern"></div>
+                  <div id="sim-val-l" class="font-mono text-sm font-black text-slate-900">L = 0</div>
+                </div>
+
+                <div class="text-center px-3">
+                  <div id="sim-car-desc" class="text-base md:text-lg font-black text-sky-700">จอดสนิท (PWM = 0)</div>
+                </div>
+
+                <div class="text-center">
+                  <div class="text-xs font-black text-slate-600">ล้อขวา</div>
+                  <div id="sim-wheel-r" class="w-8 h-16 mx-auto my-1.5 rounded-md border-2 border-slate-900 tread-pattern"></div>
+                  <div id="sim-val-r" class="font-mono text-sm font-black text-slate-900">R = 0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+
+      // SLIDE 15
+      {
+        topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
+        title: "🔍 โค้ดจริง #3: มือคีบปุ่ม O & ระบบหาจุดศูนย์ (Homing)",
+        subtitle: "ใช้ตัวแปร bool สลับอ้า/หุบมือคีบ และใช้ while loop เลื่อนแขนหาสวิตช์",
+        render: () => `
+          <div class="grid md:grid-cols-12 gap-5 items-center my-auto">
+            <div class="md:col-span-6 space-y-3">
+              <pre class="p-4 rounded-2xl bg-slate-900 text-slate-100 text-xs md:text-sm leading-relaxed border-2 border-slate-700"><code><span class="text-slate-400">// 1. กดปุ่ม O สลับอ้า-หุบมือคีบ</span>
+oOn = !oOn; <span class="text-amber-300">// สลับค่า true &lt;-&gt; false</span>
+<span class="text-sky-400 font-bold">if (oOn)</span> setServo(6, <span class="text-emerald-400 font-bold">90</span>); <span class="text-slate-400">// กางออก 90°</span>
+<span class="text-sky-400 font-bold">else</span>     setServo(6, <span class="text-rose-400 font-bold">0</span>);  <span class="text-slate-400">// หุบเข้า 0°</span></code></pre>
+
+              <pre class="p-4 rounded-2xl bg-slate-900 text-slate-100 text-xs md:text-sm leading-relaxed border-2 border-slate-700"><code><span class="text-slate-400">// 2. Homing: หมุนลงจนชนสวิตช์ = 0°</span>
+homeRun(+1, HOME_SPEED_US);
+<span class="text-sky-400 font-bold">while (!limitPressed())</span> { delay(2); }
+homeStop(); hitBeep();</code></pre>
+            </div>
+
+            <div class="md:col-span-6 p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-400 space-y-4 shadow-sm">
+              <div class="p-4 rounded-2xl bg-white border-2 border-emerald-300 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-500">มือคีบ (Servo GP23)</div>
+                  <div id="gripper-status" class="text-base font-black text-slate-900 mt-0.5">🦀 หุบอยู่ (0°)</div>
+                </div>
+                <button onclick="toggleGripperSim()" class="px-4 py-3 rounded-2xl font-black text-sm bg-rose-600 text-white hover:bg-rose-700 active:scale-95 transition shadow-sm cursor-pointer">
+                  ⭕ กดปุ่ม O
                 </button>
               </div>
 
-              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2">
+              <div class="p-4 rounded-2xl bg-white border-2 border-emerald-300 space-y-2.5">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs text-[var(--muted-foreground)]">จำลองแขนยกของ S1 วิ่งหา Limit Switch (ขา 25)</span>
-                  <button onclick="runHomingSim()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--secondary)] hover:opacity-90">
-                    🏠 กดเริ่ม Homing
+                  <span class="text-xs font-black text-slate-700">จำลองแขน S1 วิ่งชน Limit Switch</span>
+                  <button onclick="runHomingSim()" class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer">
+                    🏠 เริ่ม Homing
                   </button>
                 </div>
-                <div class="w-full bg-[var(--background)] h-6 rounded-lg overflow-hidden border border-[var(--border)] relative flex items-center">
-                  <div class="px-2 text-[10px] font-bold bg-red-500/20 h-full flex items-center border-r border-[var(--border)]">🔘 สวิตช์ (0°)</div>
-                  <div id="homing-arm-bar" class="h-4 w-8 rounded bg-[var(--primary)] transition-all duration-150" style="margin-left: 70%;"></div>
+                <div class="w-full bg-slate-100 h-8 rounded-xl overflow-hidden border-2 border-slate-300 relative flex items-center">
+                  <div class="px-2.5 text-xs font-black bg-rose-600 text-white h-full flex items-center">🔘 สวิตช์</div>
+                  <div id="homing-arm-bar" class="h-5 w-10 rounded-md bg-sky-600 transition-all duration-150" style="margin-left: 68%;"></div>
                 </div>
-                <div id="homing-log" class="font-mono text-xs text-[var(--muted-foreground)]">สถานะ: แขนกลลอยอยู่ ยังไม่รู้จุดศูนย์</div>
+                <div id="homing-log" class="font-mono text-xs font-bold text-slate-700">สถานะ: แขนกลลอยอยู่</div>
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 16
       {
         topic: "บทที่ 5: ผ่าตัดโค้ดหุ่นยนต์จริง (main.cpp)",
-        title: "🔍 ผ่าโค้ดจริง #4: เวทมนตร์ Wi-Fi & ระบบเบรกฉุกเฉิน (Failsafe)",
-        subtitle: "จากไฟล์ main.cpp บรรทัดที่ 15–16, 398, 407–411 และ 525",
+        title: "🔍 โค้ดจริง #4: Wi-Fi & ระบบเบรกฉุกเฉิน (Failsafe)",
+        subtitle: "ปล่อย Wi-Fi จากตัวรถ และสั่งหยุดล้ออัตโนมัติถ้ามือถือหลุดการเชื่อมต่อเกิน 0.8 วินาที",
         render: () => `
-          <div class="grid md:grid-cols-2 gap-5 my-auto">
-            <div class="p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-2.5">
-              <div class="text-xs font-bold text-[var(--primary)]">1. เปิด Wi-Fi และรับคำสั่งขับรถจากมือถือ</div>
-              <pre class="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>const char* AP_SSID = "ESP32-CAR"; // ชื่อ Wi-Fi
-const char* AP_PASS = "12345678";  // รหัสผ่าน 8 ตัว
+          <div class="grid md:grid-cols-2 gap-6 my-auto">
+            <!-- Wi-Fi AP -->
+            <div class="p-5 rounded-3xl bg-sky-50 border-2 border-sky-400 space-y-3 shadow-sm">
+              <div class="text-lg font-black text-sky-950">🛜 1. ปล่อยสัญญาณ Wi-Fi จากหุ่นยนต์</div>
+              <pre class="p-4 rounded-2xl bg-slate-900 text-slate-100 text-sm leading-relaxed overflow-x-auto"><code><span class="text-sky-400">const char*</span> AP_SSID = <span class="text-amber-300">"ESP32-CAR"</span>;
+<span class="text-sky-400">const char*</span> AP_PASS = <span class="text-amber-300">"12345678"</span>;
 
-// ใน setup(): เปิดปล่อยสัญญาณ Wi-Fi
-WiFi.softAP(AP_SSID, AP_PASS);
-
-// เมื่อมือถือโยกจอยส่งค่า /drive?l=200&r=200 เข้ามา
-server.on("/drive", []() {
-  int l = server.arg("l").toInt(); // อ่านความเร็วล้อซ้าย
-  int r = server.arg("r").toInt(); // อ่านความเร็วล้อขวา
-  drive(l, r);                     // สั่งมอเตอร์หมุน!
-  lastCmd = millis();              // จดเวลาที่ได้รับคำสั่งล่าสุด
-});</code></pre>
+WiFi.softAP(AP_SSID, AP_PASS);</code></pre>
+              <div class="p-3 rounded-2xl bg-white border border-sky-200 text-sm font-bold text-slate-800">
+                📱 มือถือเกาะ Wi-Fi แล้วเข้าเว็บ <code>192.168.4.1</code> เพื่อเปิดจอยเกมได้เลย!
+              </div>
             </div>
 
-            <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)] space-y-3 flex flex-col justify-between">
-              <div class="space-y-2">
-                <div class="inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">
-                  🛡️ SAFETY FEATURE (บรรทัดที่ 525)
-                </div>
-                <h3 class="text-lg font-extrabold">ระบบเบรกฉุกเฉินอัตโนมัติ (Failsafe)</h3>
-                <p class="text-xs text-[var(--muted-foreground)]">
-                  ถ้าเราโยกจอยค้างไว้แล้วเดินหลุดระยะ Wi-Fi หรือมือถือแบตหมด หุ่นยนต์จะไม่วิ่งชนกำแพง เพราะมีโค้ดบรรทัดสุดท้ายใน <code>loop()</code> คอยเฝ้าอยู่:
-                </p>
-                <pre class="p-3.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs leading-relaxed overflow-x-auto"><code>const unsigned long FAILSAFE_MS = 800; // 0.8 วินาที
-
-void loop() {
-  ...
-  // ถ้าเวลาปัจจุบัน ลบด้วย เวลาที่รับคำสั่งล่าสุด เกิน 800 ms
-  if (millis() - lastCmd > FAILSAFE_MS) {
-      drive(0, 0); // สั่งเบรกล้อทั้งสองข้างเป็น 0 ทันที!
-  }
+            <!-- Failsafe -->
+            <div class="p-5 rounded-3xl bg-rose-50 border-2 border-rose-400 space-y-3 shadow-sm">
+              <div class="text-lg font-black text-rose-950">🛡️ 2. ระบบเบรกฉุกเฉิน (บรรทัดที่ 525)</div>
+              <pre class="p-4 rounded-2xl bg-slate-900 text-slate-100 text-sm leading-relaxed overflow-x-auto"><code><span class="text-slate-400">// ถ้าขาดสัญญาณจากมือถือเกิน 800 ms (0.8 วินาที)</span>
+<span class="text-rose-400 font-bold">if (millis() - lastCmd &gt; 800)</span> {
+    <span class="text-amber-300 font-bold">drive(0, 0);</span> <span class="text-slate-400">// สั่งเบรกล้อเป็น 0 ทันที!</span>
 }</code></pre>
-              </div>
-              <div class="text-xs p-2.5 rounded-lg bg-[var(--secondary)]">
-                💡 <code>millis()</code> คือนาฬิกาจับเวลาในสมอง ESP32 ที่นับเดินหน้าไปเรื่อยๆ ตั้งแต่วินาทีที่เปิดเครื่อง
+              <div class="p-3 rounded-2xl bg-white border border-rose-200 text-sm font-bold text-rose-950">
+                ✅ ป้องกันรถวิ่งชนกำแพงเวลาแบตมือถือหมดหรือเดินหลุดระยะ Wi-Fi!
               </div>
             </div>
           </div>
         `
       },
+
+      // SLIDE 17
       {
         topic: "บทที่ 6: ภารกิจทดลองแก้โค้ด & สรุป",
-        title: "🚀 ภารกิจท้าทาย: มาลองแก้โค้ดหุ่นยนต์ของจริงกัน!",
-        subtitle: "3 จุดในไฟล์ main.cpp ที่เราสามารถปรับแต่งเพื่อให้หุ่นยนต์มีเอกลักษณ์เฉพาะตัว",
+        title: "🚀 ภารกิจท้าทาย: ลองแก้โค้ดหุ่นยนต์จริง!",
+        subtitle: "มาช่วยกันเลือกค่าที่อยากเปลี่ยน แล้วอัปโหลดลงสมองกล ESP32 กันเลย!",
         render: () => `
-          <div class="space-y-4 my-auto">
-            <div class="grid md:grid-cols-3 gap-4">
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)] space-y-2">
-                <div class="text-xs font-bold text-[var(--primary)]">ภารกิจที่ 1 (บรรทัดที่ 15)</div>
-                <h3 class="text-base font-extrabold">🛜 เปลี่ยนชื่อ Wi-Fi หุ่นยนต์</h3>
-                <p class="text-xs text-[var(--muted-foreground)]">อยากให้หุ่นยนต์ปล่อย Wi-Fi ชื่ออะไร? ตั้งชื่อใหม่แล้วหยิบมือถือมาส่องดูกัน!</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>// แก้ข้อความในเครื่องหมายคำพูด
-const char* AP_SSID = "ROBOT-M1";</code></pre>
+          <div class="space-y-5 my-auto">
+            <div class="grid md:grid-cols-3 gap-5">
+              <div class="p-5 rounded-3xl bg-sky-50 border-4 border-sky-500 space-y-2.5 shadow-sm">
+                <span class="px-3 py-1 rounded-xl bg-sky-600 text-white text-xs font-black">ภารกิจที่ 1 (บรรทัด 15)</span>
+                <h3 class="text-xl font-black text-sky-950">🛜 เปลี่ยนชื่อ Wi-Fi รถ</h3>
+                <pre class="p-3 rounded-2xl bg-slate-900 text-amber-300 text-sm font-bold overflow-x-auto"><code>AP_SSID = "ROBOT-M1";</code></pre>
               </div>
 
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)] space-y-2">
-                <div class="text-xs font-bold text-[var(--primary)]">ภารกิจที่ 2 (บรรทัดที่ 501)</div>
-                <h3 class="text-base font-extrabold">🎵 แต่งจังหวะเสียงเปิดเครื่อง</h3>
-                <p class="text-xs text-[var(--muted-foreground)]">ใช้ฟังก์ชัน <code>beep()</code> และ <code>delay()</code> แต่งจังหวะเสียงทักทายตอนเปิดสวิตช์</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>beep(100); delay(100);
-beep(100); delay(100);
-beep(400); // สั้น-สั้น-ยาว!</code></pre>
+              <div class="p-5 rounded-3xl bg-amber-50 border-4 border-amber-500 space-y-2.5 shadow-sm">
+                <span class="px-3 py-1 rounded-xl bg-amber-500 text-white text-xs font-black">ภารกิจที่ 2 (บรรทัด 501)</span>
+                <h3 class="text-xl font-black text-amber-950">🎵 แต่งเสียงปี๊บเปิดเครื่อง</h3>
+                <pre class="p-3 rounded-2xl bg-slate-900 text-amber-300 text-sm font-bold overflow-x-auto"><code>beep(100); delay(100);
+beep(400);</code></pre>
               </div>
 
-              <div class="p-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)] space-y-2">
-                <div class="text-xs font-bold text-[var(--primary)]">ภารกิจที่ 3 (บรรทัดที่ 210)</div>
-                <h3 class="text-base font-extrabold">🦀 ปรับมุมอ้าของมือคีบ</h3>
-                <p class="text-xs text-[var(--muted-foreground)]">ปรับค่าเริ่มต้นของตัวแปร <code>O_OPEN</code> เพื่อเปลี่ยนระยะอ้าของมือคีบเมื่อกดปุ่ม O</p>
-                <pre class="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto"><code>// ลองเปลี่ยนมุมระหว่าง 0 ถึง 180
-int O_OPEN = 120, O_CLOSE = 10;</code></pre>
+              <div class="p-5 rounded-3xl bg-emerald-50 border-4 border-emerald-500 space-y-2.5 shadow-sm">
+                <span class="px-3 py-1 rounded-xl bg-emerald-600 text-white text-xs font-black">ภารกิจที่ 3 (บรรทัด 210)</span>
+                <h3 class="text-xl font-black text-emerald-950">🦀 ปรับมุมอ้ามือคีบ</h3>
+                <pre class="p-3 rounded-2xl bg-slate-900 text-amber-300 text-sm font-bold overflow-x-auto"><code>int O_OPEN = 120;</code></pre>
               </div>
             </div>
 
-            <div class="p-4 rounded-2xl bg-[var(--secondary)] flex flex-wrap items-center justify-between gap-4">
+            <div class="p-5 rounded-3xl bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4 shadow-md">
               <div>
-                <div class="text-sm font-extrabold">🎉 สรุปหัวใจสำคัญของการเขียนโค้ดหุ่นยนต์ ESP32</div>
-                <div class="text-xs text-[var(--muted-foreground)] mt-0.5">
-                  สมองกล <b>ESP32 (Input/Process/Output)</b> • โครงสร้างโค้ด <b>Variable, If/Else, Loop, Function</b> • สัญญาณ <b>Digital vs Analog & PWM (0–255)</b>
+                <div class="text-lg font-black text-sky-400">🎉 สรุปหัวใจสำคัญวันนี้</div>
+                <div class="text-sm font-bold text-slate-200 mt-0.5">
+                  ESP32 (Input ➔ Process ➔ Output) • ตัวแปร, If/Else, Loop, Function • Digital vs Analog & PWM (0–255)
                 </div>
               </div>
-              <button onclick="goToSlide(0)" class="text-xs font-bold px-3.5 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition">
-                🔄 กลับไปหน้าแรก
+              <button onclick="goToSlide(0)" class="text-sm font-black px-5 py-2.5 rounded-2xl bg-sky-500 text-slate-950 hover:bg-sky-400 transition cursor-pointer">
+                🔄 กลับหน้าแรก
               </button>
             </div>
           </div>
@@ -1087,12 +1398,12 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
       stageEl.classList.add('slide-fade');
 
       stageEl.innerHTML = `
-        <div class="border-b border-[var(--border)] pb-3 mb-4 flex items-start justify-between gap-4">
+        <div class="border-b-2 border-slate-200 pb-4 mb-5 flex items-start justify-between gap-4">
           <div>
-            <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">${s.title}</h1>
-            <p class="text-xs md:text-sm text-[var(--muted-foreground)] mt-0.5">${s.subtitle}</p>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight text-slate-900">${s.title}</h1>
+            <p class="text-sm md:text-base font-bold text-slate-600 mt-1">${s.subtitle}</p>
           </div>
-          <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-[var(--background)] border border-[var(--border)] shrink-0">
+          <span class="font-mono text-base font-black px-3.5 py-1.5 rounded-xl bg-slate-100 border-2 border-slate-300 text-slate-800 shrink-0">
             ${currentSlide + 1} / ${slides.length}
           </span>
         </div>
@@ -1101,9 +1412,35 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
         </div>
       `;
 
-      if (currentSlide === 8) {
+      if (document.getElementById('pwm-canvas')) {
         updatePwmSim(currentPwmValue);
       }
+    }
+
+    function highlightSchem(group) {
+      const grps = {
+        power: document.getElementById('sch-grp-power'),
+        motor: document.getElementById('sch-grp-motor'),
+        io: document.getElementById('sch-grp-io')
+      };
+      const btns = {
+        all: document.getElementById('sch-btn-all'),
+        power: document.getElementById('sch-btn-power'),
+        motor: document.getElementById('sch-btn-motor'),
+        io: document.getElementById('sch-btn-io')
+      };
+      if (!grps.power) return;
+
+      Object.keys(grps).forEach(k => {
+        grps[k].style.opacity = (group === 'all' || group === k) ? '1' : '0.18';
+      });
+      Object.keys(btns).forEach(k => {
+        if (k === group) {
+          btns[k].className = "px-3 py-1.5 rounded-xl bg-sky-600 text-white cursor-pointer transition shadow-sm";
+        } else {
+          btns[k].className = "px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-200 cursor-pointer transition";
+        }
+      });
     }
 
     function nextSlide() {
@@ -1151,15 +1488,15 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
 
       badge.textContent = `limitPressed() = ${pressed}`;
       if (pressed) {
-        bTrue.className = "pl-4 py-1 rounded bg-[var(--secondary)] font-bold transition";
-        bFalse.className = "pl-4 py-1 rounded opacity-40 transition";
-        btnT.className = "flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] transition";
-        btnF.className = "flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)] transition";
+        bTrue.className = "pl-5 py-2 rounded-xl bg-rose-600 text-white font-black transition";
+        bFalse.className = "pl-5 py-2 rounded-xl opacity-30 transition";
+        btnT.className = "flex-1 py-3 px-4 rounded-2xl text-sm md:text-base font-black bg-rose-600 text-white shadow-md transition cursor-pointer";
+        btnF.className = "flex-1 py-3 px-4 rounded-2xl text-sm md:text-base font-black bg-slate-200 text-slate-700 transition cursor-pointer";
       } else {
-        bTrue.className = "pl-4 py-1 rounded opacity-40 transition";
-        bFalse.className = "pl-4 py-1 rounded bg-[var(--secondary)] font-bold transition";
-        btnF.className = "flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] transition";
-        btnT.className = "flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)] transition";
+        bTrue.className = "pl-5 py-2 rounded-xl opacity-30 transition";
+        bFalse.className = "pl-5 py-2 rounded-xl bg-emerald-600 text-white font-black transition";
+        btnF.className = "flex-1 py-3 px-4 rounded-2xl text-sm md:text-base font-black bg-emerald-600 text-white shadow-md transition cursor-pointer";
+        btnT.className = "flex-1 py-3 px-4 rounded-2xl text-sm md:text-base font-black bg-slate-200 text-slate-700 transition cursor-pointer";
       }
     }
 
@@ -1176,7 +1513,7 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
       if (slider) slider.value = currentPwmValue;
       const duty = Math.round((currentPwmValue / 255) * 100);
       if (valBadge) valBadge.textContent = `ledcWrite(ch, ${currentPwmValue})`;
-      if (dutyBadge) dutyBadge.textContent = `Duty Cycle: ${duty}%`;
+      if (dutyBadge) dutyBadge.textContent = `เปิดไฟ: ${duty}%`;
       if (avgVolt) avgVolt.textContent = `ไฟเฉลี่ย ~${duty}% (${((3.3 * currentPwmValue) / 255).toFixed(1)}V)`;
 
       if (wheelIcon && motorStatus) {
@@ -1186,7 +1523,7 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
         } else {
           const duration = Math.max(0.18, 1.5 - (currentPwmValue / 255) * 1.3);
           wheelIcon.style.animation = `spin ${duration}s linear infinite`;
-          motorStatus.textContent = currentPwmValue > 220 ? `หมุนเร็วมาก! (${duty}%)` :
+          motorStatus.textContent = currentPwmValue > 220 ? `หมุนเร็วสุด! (${duty}%)` :
                                     currentPwmValue > 100 ? `หมุนปานกลาง (${duty}%)` : `หมุนช้าๆ (${duty}%)`;
         }
       }
@@ -1195,15 +1532,15 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const padX = 36, padY = 20;
-        const w = canvas.width - padX - 12;
+        const padX = 46, padY = 20;
+        const w = canvas.width - padX - 14;
         const h = canvas.height - padY * 2;
         const cycles = 4;
         const cycleW = w / cycles;
         const dutyRatio = currentPwmValue / 255;
 
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.moveTo(padX, padY); ctx.lineTo(padX + w, padY);
@@ -1211,13 +1548,13 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
         ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '10px monospace';
-        ctx.fillText('HIGH', 4, padY + 4);
-        ctx.fillText('LOW', 8, padY + h + 4);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('HIGH', 6, padY + 4);
+        ctx.fillText('LOW', 10, padY + h + 4);
 
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#0284c7';
+        ctx.lineWidth = 4;
         ctx.beginPath();
         for (let i = 0; i < cycles; i++) {
           const x0 = padX + i * cycleW;
@@ -1275,7 +1612,6 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
       const wr = document.getElementById('sim-wheel-r');
       const vl = document.getElementById('sim-val-l');
       const vr = document.getElementById('sim-val-r');
-      const body = document.getElementById('sim-car-body');
       const desc = document.getElementById('sim-car-desc');
       if (!wl) return;
 
@@ -1286,19 +1622,14 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
       wr.style.animation = r > 0 ? 'wheelSpinFwd 0.4s linear infinite' : r < 0 ? 'wheelSpinRev 0.4s linear infinite' : 'none';
 
       if (l > 0 && r > 0) {
-        body.textContent = '⬆️ 🤖';
-        desc.textContent = 'วิ่งเดินหน้าตรง!';
+        desc.textContent = 'วิ่งเดินหน้าตรง';
       } else if (l < 0 && r < 0) {
-        body.textContent = '⬇️ 🤖';
-        desc.textContent = 'วิ่งถอยหลังตรง!';
+        desc.textContent = 'วิ่งถอยหลังตรง';
       } else if (l > 0 && r < 0) {
-        body.textContent = '🔄 🤖 ↪️';
-        desc.textContent = 'หมุนเลี้ยวขวาอยู่กับที่!';
+        desc.textContent = 'หมุนเลี้ยวขวาอยู่กับที่';
       } else if (l < 0 && r > 0) {
-        body.textContent = '↩️ 🤖 🔄';
-        desc.textContent = 'หมุนเลี้ยวซ้ายอยู่กับที่!';
+        desc.textContent = 'หมุนเลี้ยวซ้ายอยู่กับที่';
       } else {
-        body.textContent = '🛑 🤖';
         desc.textContent = 'จอดสนิท (PWM = 0)';
       }
     }
@@ -1308,9 +1639,9 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
       const el = document.getElementById('gripper-status');
       if (!el) return;
       if (gripperOpen) {
-        el.textContent = '🦞 กางออก! (oOn = true ➔ 90°)';
+        el.textContent = '🦞 กางออก! (90°)';
       } else {
-        el.textContent = '🦀 หุบเข้า! (oOn = false ➔ 0°)';
+        el.textContent = '🦀 หุบเข้า! (0°)';
       }
     }
 
@@ -1319,17 +1650,17 @@ int O_OPEN = 120, O_CLOSE = 10;</code></pre>
       const log = document.getElementById('homing-log');
       if (!bar || !log) return;
 
-      bar.style.marginLeft = '70%';
-      log.textContent = 'while (!limitPressed()): กำลังหมุนแขนกลลงหาสวิตช์...';
+      bar.style.marginLeft = '68%';
+      log.textContent = 'กำลังหมุนแขนกลลงหาสวิตช์...';
 
-      let pos = 70;
+      let pos = 68;
       const timer = setInterval(() => {
         pos -= 10;
         if (pos <= 0) {
           pos = 0;
           bar.style.marginLeft = '0%';
           clearInterval(timer);
-          log.textContent = '✅ ชนสวิตช์แล้ว! (limitPressed() == true) ➔ homeStop() + hitBeep() ตั้งจุด 0° สำเร็จ!';
+          log.textContent = '✅ ชนสวิตช์แล้ว! หยุดทันที + ตั้งจุด 0° สำเร็จ!';
           playSimBeep(120);
         } else {
           bar.style.marginLeft = pos + '%';
