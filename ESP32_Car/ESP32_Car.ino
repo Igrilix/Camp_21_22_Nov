@@ -155,7 +155,9 @@ void homeStop() {
   lastHomeDir = 0;
 }
 
+bool abortS1 = false;   // set by the STOP S1 button to break out of blocking homing/move loops
 bool homeServo() {
+  abortS1 = false;
   s1Mode = 0;
   homed = false;
   if (limitPressed()) {
@@ -166,6 +168,7 @@ bool homeServo() {
   homeRun(+1, HOME_SPEED_US);              // creep toward the switch
   while (!limitStable()) {
     server.handleClient();
+    if (abortS1) { homeStop(); Serial.println("HOMING aborted by STOP S1"); return false; }
     if (millis() - t0 > HOME_TIMEOUT_MS) {
       homeStop();
       Serial.println("HOMING FAILED: limit switch not triggered (timeout)");
@@ -194,6 +197,7 @@ void moveHomeTo(int a) {
   int cur = servoAngle[HOME_SERVO];
   int d = a - cur;
   if (d == 0) return;
+  abortS1 = false;
   unsigned long dur = (unsigned long)(abs(d) / DEG_PER_SEC * 1000.0);
   homeRun(d < 0 ? +1 : -1, MOVE_SPEED_US);
   bool hitSwitch = false;
@@ -201,6 +205,7 @@ void moveHomeTo(int a) {
   while (millis() - t0 < dur) {
     if (d < 0 && limitStable()) { a = 0; hitSwitch = true; break; }   // never push past the switch
     server.handleClient();
+    if (abortS1) { a = cur + (int)((d < 0 ? -1 : 1) * (millis() - t0) * DEG_PER_SEC / 1000.0); a = constrain(a, 0, 180); break; }
     delay(5);
   }
   homeStop();
@@ -286,6 +291,7 @@ const char PAGE[] PROGMEM = R"HTML(<!DOCTYPE html><html><head><meta charset="utf
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ESP32 CAR</title><style>
 *{box-sizing:border-box}
+.help{font-size:13px;color:#adf;background:#1b2630;border-radius:8px;padding:8px;margin:6px auto;max-width:520px;text-align:left;line-height:1.5}
 html,body{margin:0;width:100%;height:100%;height:100dvh;background:#111;color:#eee;font-family:sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
 #pad{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;justify-items:center;width:100%;height:100%;height:100dvh;gap:clamp(6px,2vw,24px);padding:max(8px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right),3vw) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left),3vw)}
 #joy{width:min(62vh,28vw);height:min(62vh,28vw);width:min(62dvh,28vw);height:min(62dvh,28vw);border-radius:50%;background:#222;border:3px solid #2a6;position:relative;touch-action:none}
@@ -310,8 +316,8 @@ input[type=range]{width:90%;max-width:260px}
   <div id=st2>...</div>
   <canvas id=irc width=240 height=36></canvas>
   <div id=msg style="color:#fc3;min-height:1.3em"></div>
-  <div style="width:100%">Speed <span id=sv>200</span><br><input id=sp type=range min=50 max=255 value=200 oninput="sv.innerText=this.value"></div>
-  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px"><button class=m id=fs>Fullscreen</button><button class=m id=gear>&#9881; Menu</button><button class=m id=stop style="background:#c33">STOP</button></div>
+  <div style="width:100%">ความเร็ว <span id=sv>200</span><br><input id=sp type=range min=50 max=255 value=200 oninput="sv.innerText=this.value"></div>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px"><button class=m id=fs>เต็มจอ</button><button class=m id=gear>&#9881; เมนู</button><button class=m id=stop style="background:#c33">STOP</button></div>
  </div>
  <div id=face>
   <div class=fb id=bT data-b=T>&#9651;</div>
@@ -321,51 +327,76 @@ input[type=range]{width:90%;max-width:260px}
  </div>
 </div>
 <div id=menu>
- <button class=m onclick="menu.style.display='none'" style="background:#2a6">&#10005; Close</button>
- <h3>Status</h3><div id=st style="font-size:16px">...</div>
- <h3>S1</h3>
- <button class=m onclick="homeMsg.innerText='homing...';fetch('/home').then(r=>r.text()).then(t=>homeMsg.innerText=t)">HOME S1</button> <span id=homeMsg></span><br>
- <button class=m id=s1u>&#9650; away</button><button class=m id=s1d>&#9660; to switch</button>
- <h3>Servos</h3><div id=sv6></div>
- <h3>Settings (saved in flash)</h3><div id=cfg></div><div id=cm></div>
+ <button class=m onclick="menu.style.display='none'" style="background:#2a6">&#10005; ปิดเมนู</button>
+ <h3>สถานะ</h3><div id=st style="font-size:16px">...</div>
+ <h3>S1 (เซอร์โวขึ้น/ลง)</h3>
+ <button class=m onclick="homeMsg.innerText='homing...';fetch('/home').then(r=>r.text()).then(t=>homeMsg.innerText=t)">HOME S1 (หาตำแหน่งศูนย์)</button> <span id=homeMsg></span><br>
+ <button class=m id=s1u>&#9650; ขึ้น (ออกจากสวิตช์)</button><button class=m id=s1d>&#9660; ลง (เข้าหาสวิตช์)</button><br>
+ <button class=m id=stopS1 style="background:#c33;font-size:18px;padding:12px 18px">&#9632; หยุดเซอร์โว S1</button><br>
+ <button class=m id=flipUD style="background:#06c">&#128260; กลับทิศ ขึ้น/ลง</button> <span id=flipMsg></span>
+ <div class=help>ถ้ากดปุ่ม <b>ขึ้น</b> แล้วเซอร์โวหมุนลง (ผิดทาง) ให้กดปุ่มสีน้ำเงิน &quot;กลับทิศ ขึ้น/ลง&quot; 1 ครั้ง
+ ระบบจะสลับทิศให้ทั้งปุ่ม ▲▼ ปุ่ม △ (ขึ้น) ปุ่ม ✕ (ลง) และตอน HOME โดยบันทึกลงหน่วยความจำ ปิดเครื่องแล้วยังจำค่าเดิม<br>
+ สถานะตอนนี้: <b id=udState>...</b></div>
+ <h3>เซอร์โว S1–S7</h3><div id=sv6></div>
+ <h3>ตั้งค่า (บันทึกในเครื่อง)</h3><div id=cfg></div><div id=cm></div>
+ <h3>คำอธิบายการใช้งาน</h3>
+ <div class=help>
+ <b>จอยสติ๊กซ้าย</b>: ขับรถไปหน้า/หลัง/เลี้ยว ปล่อยนิ้วแล้วรถหยุดเอง<br>
+ <b>ความเร็ว</b>: เลื่อนแถบเพื่อปรับแรงมอเตอร์ (50–255)<br>
+ <b>△ (สามเหลี่ยม)</b>: เซอร์โว S1 ขึ้น กดซ้ำเพื่อหยุด<br>
+ <b>✕ (กากบาท)</b>: เซอร์โว S1 ลง จะหยุดเองเมื่อชนลิมิตสวิตช์หรือ IR เจอวัตถุ<br>
+ <b>○ (วงกลม)</b>: เปิด/ปิดตัวคีบ (S7) ตามมุมที่ตั้งไว้ด้านล่าง<br>
+ <b>□ (สี่เหลี่ยม)</b>: ปุ่มเสริม<br>
+ <b>STOP</b>: หยุดมอเตอร์ล้อและเซอร์โว S1 ทันที<br>
+ <b>หยุดเซอร์โว S1</b> (ในเมนู): หยุด S1 ทุกโหมด รวมถึงตอน HOME และ △/✕ ที่กำลังทำงาน<br>
+ <b>HOME S1</b>: ให้ S1 ลงไปแตะลิมิตสวิตช์เพื่อตั้งจุดศูนย์ (ทำก่อนใช้ปุ่มมุม)<br>
+ <b>กลับทิศ ขึ้น/ลง</b>: ใช้เมื่อเซอร์โวหมุนผิดทางจากที่ปุ่มบอก<br>
+ <b>ไฟสถานะ</b>: Limit = สถานะลิมิตสวิตช์, IR = เซนเซอร์ตรวจวัตถุ, homed = ตั้งศูนย์แล้วหรือยัง<br>
+ <b>เชื่อมต่อ</b>: ต่อ WiFi ชื่อ ESP32-CAR รหัส 12345678 แล้วเปิด http://192.168.4.1
+ </div>
 </div>
 <script>
 const $=id=>document.getElementById(id);
 const joy=$('joy'),knob=$('knob');let jx=0,jy=0,jt=null,act=false,dBusy=false,stBusy=false;
-function jset(x,y){const R=joy.clientWidth/2,k=knob.offsetWidth/2;knob.style.left=(R-k+x*(R-k))+'px';knob.style.top=(R-k+y*(R-k))+'px'}
-function jpos(e){const r=joy.getBoundingClientRect(),R=r.width/2;let x=(e.clientX-r.left-R)/R,y=(e.clientY-r.top-R)/R;const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}jx=x;jy=-y;jset(x,y)}
-function jsend(){if(dBusy)return;const s=+$('sp').value;const mag=Math.min(1,Math.hypot(jx,jy));if(mag<0.1){dBusy=true;fetch('/drive?l=0&r=0').catch(()=>{}).finally(()=>dBusy=false);return}
- let L=jy+jx,R=jy-jx;const k=mag/Math.max(Math.abs(L),Math.abs(R),1e-6);L=Math.round(L*k*s);R=Math.round(R*k*s);dBusy=true;fetch('/drive?l='+L+'&r='+R).catch(()=>{}).finally(()=>dBusy=false)}
-function jend(){act=false;clearInterval(jt);jx=jy=0;jset(0,0);fetch('/drive?l=0&r=0').catch(()=>{})}
+const jset=(x,y)=>{const R=joy.clientWidth/2,k=knob.offsetWidth/2;knob.style.left=(R-k+x*(R-k))+'px';knob.style.top=(R-k+y*(R-k))+'px'};
+const jpos=e=>{const r=joy.getBoundingClientRect(),R=r.width/2;let x=(e.clientX-r.left-R)/R,y=(e.clientY-r.top-R)/R;const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}jx=x;jy=-y;jset(x,y)};
+const jsend=()=>{if(dBusy)return;const s=+$('sp').value;const mag=Math.min(1,Math.hypot(jx,jy));if(mag<0.1){dBusy=true;fetch('/drive?l=0&r=0').catch(()=>{}).finally(()=>dBusy=false);return}
+ let L=jy+jx,R=jy-jx;const k=mag/Math.max(Math.abs(L),Math.abs(R),1e-6);L=Math.round(L*k*s);R=Math.round(R*k*s);dBusy=true;fetch('/drive?l='+L+'&r='+R).catch(()=>{}).finally(()=>dBusy=false)};
+const jend=()=>{act=false;clearInterval(jt);jx=jy=0;jset(0,0);fetch('/drive?l=0&r=0').catch(()=>{})};
 joy.addEventListener('pointerdown',e=>{e.preventDefault();joy.setPointerCapture(e.pointerId);act=true;jpos(e);jsend();jt=setInterval(jsend,120)});
 joy.addEventListener('pointermove',e=>{if(act){e.preventDefault();jpos(e)}});
 joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
-$('stop').onclick=()=>fetch('/drive?l=0&r=0');
+$('stop').onclick=()=>{fetch('/drive?l=0&r=0');fetch('/stops1')};
 document.querySelectorAll('.fb').forEach(b=>{
  b.addEventListener('pointerdown',e=>{e.preventDefault();b.style.background='#444';fetch('/btn?b='+b.dataset.b).then(r=>r.text()).then(t=>$('msg').innerText=t).catch(()=>{})});
  const up=()=>b.style.background='#222';b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up)});
 $('gear').onclick=()=>$('menu').style.display='block';
 $('rot').onclick=()=>$('rot').style.display='none';
 $('fs').onclick=()=>{const d=document.documentElement;(d.requestFullscreen?d.requestFullscreen():Promise.resolve()).then(()=>{if(screen.orientation&&screen.orientation.lock)return screen.orientation.lock('landscape')}).catch(()=>{})};
-const irh=[];function drawIr(){const c=$('irc'),g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,c.width,c.height);g.strokeStyle='#5f5';g.beginPath();irh.forEach((v,i)=>{const x=i*c.width/60,y=v?5:c.height-5;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke()}
+const irh=[];const drawIr=()=>{const c=$('irc'),g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,c.width,c.height);g.strokeStyle='#5f5';g.beginPath();irh.forEach((v,i)=>{const x=i*c.width/60,y=v?5:c.height-5;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke()};
 setInterval(()=>{if(stBusy)return;stBusy=true;fetch('/status').then(r=>r.json()).then(j=>{
- const m=['idle','going UP','going DOWN'][j.x];
+ const m=['หยุด','กำลังขึ้น','กำลังลง'][j.x];
  const h='Limit: '+(j.limit?'<b style=color:#f55>PRESSED</b>':'open')+' (GP25='+j.raw+') | IR: '+(j.ir?'<b style=color:#5f5>DETECT</b>':'clear')+' ('+j.irf+' flips/s'+(j.irf>4?' <b style=color:#f55>NOISY</b>':'')+')<br>S1: '+m+(j.top?' (TOP)':'')+' | homed: '+(j.homed?'yes':'NO')+'<br>Servo: '+j.s.join(', ')+'<br>S1 last stop: '+j.why+'<br>Uptime: '+j.up+'s | last reset: '+(({1:'power-on',2:'external',3:'software',4:'panic/crash',5:'int-wdt',6:'task-wdt',7:'wdt',8:'deep-sleep',9:'BROWNOUT',10:'sdio'})[j.rst]||j.rst);
  $('st2').innerHTML=h;$('st').innerHTML=h;irh.push(j.ir);if(irh.length>60)irh.shift();drawIr()}).catch(()=>{}).finally(()=>stBusy=false)},400);
-function holdS1(id,d){const e=$(id);let t=null;const go=()=>fetch('/jog?d='+d+'&ms=200').catch(()=>{});
+const holdS1=(id,d)=>{const e=$(id);let t=null;const go=()=>fetch('/jog?d='+d+'&ms=200').catch(()=>{});
  e.addEventListener('pointerdown',ev=>{ev.preventDefault();go();t=setInterval(go,220)});
  const off=ev=>{ev.preventDefault();clearInterval(t);fetch('/jog?d=0').catch(()=>{})};
- e.addEventListener('pointerup',off);e.addEventListener('pointerleave',off);e.addEventListener('pointercancel',off)}
+ e.addEventListener('pointerup',off);e.addEventListener('pointerleave',off);e.addEventListener('pointercancel',off)};
 holdS1('s1u',-1);holdS1('s1d',1);
+$('stopS1').onclick=()=>fetch('/stops1').then(r=>r.text()).then(t=>{$('flipMsg').innerText=t});
+const showUD=v=>{$('udState').innerText=v?'กลับทิศแล้ว (invert)':'ปกติ'};
+$('flipUD').onclick=()=>fetch('/cfg').then(r=>r.json()).then(j=>{const n=j.invert?0:1;
+ return fetch('/set?k=invert&v='+n).then(()=>{showUD(n);$('flipMsg').innerText='บันทึกแล้ว';setTimeout(()=>$('flipMsg').innerText='',2000);const cb=document.querySelector('#cfg input[type=checkbox][onchange*=invert]');if(cb)cb.checked=!!n})});
+fetch('/cfg').then(r=>r.json()).then(j=>showUD(j.invert));
 for(let i=0;i<7;i++){$('sv6').insertAdjacentHTML('beforeend',
  `<div class=r>S${i+1}: <span id=v${i}>90</span>&deg;<br><input type=range min=0 max=180 value=90 oninput="v${i}.innerText=this.value;fetch('/servo?n=${i}&a='+this.value)"></div>`)}
-const F=[['homeSpd','Home speed (us)'],['moveSpd','Move speed (us)'],['stopUs','Stop pulse (us)'],['dps','Deg per sec']];
-const C=[['autoHome','Auto-home at boot'],['invert','Home direction inverted'],['limHigh','Limit pressed = HIGH'],['irLow','IR active LOW']];
+const F=[['homeSpd','ความเร็ว HOME (us)'],['moveSpd','ความเร็วเคลื่อนที่ (us)'],['stopUs','พัลส์หยุดนิ่ง (us)'],['dps','องศาต่อวินาที']];
+const C=[['autoHome','HOME อัตโนมัติตอนเปิดเครื่อง'],['invert','กลับทิศ ขึ้น/ลง (invert)'],['limHigh','ลิมิตสวิตช์ถูกกด = HIGH'],['irLow','IR ตรวจพบ = LOW']];
 fetch('/cfg').then(r=>r.json()).then(j=>{let h='';
  F.forEach(f=>h+=`<div class=r>${f[1]} <input type=number step=any value=${j[f[0]]} style="width:90px" onchange="fetch('/set?k=${f[0]}&v='+this.value).then(r=>r.text()).then(t=>cm.innerText=t)"></div>`);
  C.forEach(c=>h+=`<div class=r><label><input type=checkbox ${j[c[0]]?'checked':''} onchange="fetch('/set?k=${c[0]}&v='+(this.checked?1:0)).then(r=>r.text()).then(t=>cm.innerText=t)"> ${c[1]}</label></div>`);
- h+=`<div class=r>Gripper (GP23) TARGET angle, press O: <span id=oo>${j.oOpen}</span>&deg;<br><input type=range min=0 max=180 value=${j.oOpen} oninput="oo.innerText=this.value;fetch('/servo?n=6&a='+this.value)" onchange="fetch('/set?k=oOpen&v='+this.value).then(r=>r.text()).then(t=>cm.innerText=t)"></div>`;
- h+=`<div class=r>Gripper (GP23) START angle, boot and O again: <span id=oc>${j.oClose}</span>&deg;<br><input type=range min=0 max=180 value=${j.oClose} oninput="oc.innerText=this.value;fetch('/servo?n=6&a='+this.value)" onchange="fetch('/set?k=oClose&v='+this.value).then(r=>r.text()).then(t=>cm.innerText=t)"></div>`;
+ h+=`<div class=r>มุมเป้าหมายของตัวคีบ (GP23) ตอนกดปุ่ม O: <span id=oo>${j.oOpen}</span>&deg;<br><input type=range min=0 max=180 value=${j.oOpen} oninput="oo.innerText=this.value;fetch('/servo?n=6&a='+this.value)" onchange="fetch('/set?k=oOpen&v='+this.value).then(r=>r.text()).then(t=>cm.innerText=t)"></div>`;
+ h+=`<div class=r>มุมเริ่มต้นของตัวคีบ (GP23) ตอนเปิดเครื่อง/กด O อีกครั้ง: <span id=oc>${j.oClose}</span>&deg;<br><input type=range min=0 max=180 value=${j.oClose} oninput="oc.innerText=this.value;fetch('/servo?n=6&a='+this.value)" onchange="fetch('/set?k=oClose&v='+this.value).then(r=>r.text()).then(t=>cm.innerText=t)"></div>`;
  $('cfg').innerHTML=h});
 </script></body></html>
 )HTML";
@@ -456,12 +487,17 @@ void setup() {
     saveCfg();
     server.send(200, "text/plain", "saved");
   });
+  server.on("/stops1", []() {
+    abortS1 = true; s1Mode = 0; s1Why = "STOP S1 button"; homeStop();
+    logEv("S1 stop: %s", s1Why);
+    server.send(200, "text/plain", "หยุด S1 แล้ว");
+  });
   // Jog S1: d=1 toward switch, d=-1 away, d=0 stop. Tracks position if homed.
   server.on("/jog", []() {
     int d = server.arg("d").toInt();
     s1Mode = 0;
     int ms = constrain(server.arg("ms").toInt(), 0, 1500);
-    if (d == 0) { homeStop(); server.send(200, "text/plain", "stopped"); return; }
+    if (d == 0) { abortS1 = true; homeStop(); server.send(200, "text/plain", "stopped"); return; }
     if (d > 0 && limitPressed()) { hitBeep(); server.send(200, "text/plain", "at limit"); return; }
     homeRun(d > 0 ? 1 : -1, MOVE_SPEED_US);
     unsigned long t0 = millis();
